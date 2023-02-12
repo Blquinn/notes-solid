@@ -1,0 +1,9 @@
+/* @tailwind base;
+@tailwind components;
+@tailwind utilities; */
+
+@import 'skeleton/themes/theme-hamlindigo.css';
+@import 'skeleton/styles/all.css';
+
+html { @apply dark; }
+html, body, #root { @apply h-full overflow-hidden; }
