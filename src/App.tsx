@@ -1,6 +1,6 @@
 import "./App.css";
-import AppBar from "./skeleton/components/AppBar";
-import AppShell from "./skeleton/components/AppShell";
+import AppBar from "./lib/skeleton/components/AppBar";
+import AppShell from "./lib/skeleton/components/AppShell";
 
 function App() {
   const leftSideBar = (
@@ -8,9 +8,7 @@ function App() {
   );
 
   const header = (
-    <AppBar>
-      <p>App bar content</p>
-    </AppBar>
+    <AppBar padding="p-2" lead={<span>(icon)</span>} trail={<span>(icon)</span>} />
   );
 
   return (
