@@ -58,29 +58,35 @@ function Node(props: NodeProps) {
 
   const showChildren = (node: TTreeNode) => state.expandedNodes[node.id] ?? false;
 
+  const treeNode = (node: TTreeNode) => (
+    <span class="inner"
+      onClick={() => select(node.id)}
+      classList={{ ['bg-primary-active-token']: node.id == state.selectedNode }}>
+      <span class="no-arrow" />
+      <span class="label">{node.label}</span>
+    </span>
+  );
+
+  const branchNode = (node: TTreeNode) => (
+    <>
+      <span class="inner" onClick={() => expand(node.id)} >
+        <span class="arrow"
+          classList={{ ['arrowDown']: showChildren(node) }}>
+          <Icon path={chevronRight}></Icon>
+        </span>
+        <span class="label">{node.label}</span>
+      </span>
+      <Show when={showChildren(node)}>
+        <Node tree={node.children!} listClasses={props.listClasses} />
+      </Show>
+    </>
+  );
+
   return (
     <ul class={props.listClasses}>
       <For each={props.tree}>{(node, i) =>
         <li class="pointer">
-          <Show when={node.children} fallback={
-            <span class="inner"
-              onClick={() => select(node.id)}
-              classList={{ ['bg-primary-active-token']: node.id == state.selectedNode }}>
-              <span class="no-arrow" />
-              <span class="label">{node.label}</span>
-            </span>
-          }>
-            <span class="inner" onClick={() => expand(node.id)} >
-              <span class="arrow"
-                classList={{ ['arrowDown']: showChildren(node) }}>
-                <Icon path={chevronRight}></Icon>
-              </span>
-              <span class="label">{node.label}</span>
-            </span>
-            <Show when={showChildren(node)}>
-              <Node tree={node.children!} listClasses={props.listClasses} />
-            </Show>
-          </Show>
+          {node.children ? branchNode(node) : treeNode(node)}
         </li>
       }</For>
     </ul>
