@@ -1,6 +1,8 @@
 import { For, Show, useContext } from 'solid-js';
 import { TreeContext, TreeProvider, TTree, TTreeNode } from './treeContext';
 import { Transition, TransitionGroup } from 'solid-transition-group';
+import { Icon } from 'solid-heroicons';
+import { chevronRight } from 'solid-heroicons/solid';
 
 import './TreeView.css';
 
@@ -71,8 +73,7 @@ function Node(props: NodeProps) {
               <span class="inner" onClick={() => expand(node.id)} >
                 <span class="arrow"
                   classList={{ ['arrowDown']: showChildren(node) }}>
-                  {/* <ChevronRight class="icon" height={16} width={16} /> */}
-                  {'>'}
+                    <Icon path={chevronRight}></Icon>
                 </span>
                 <span class="label">{node.label}</span>
               </span>
