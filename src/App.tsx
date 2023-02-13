@@ -8,7 +8,7 @@ function App() {
 
   const leftSideBar = (
     <div class="side-bar h-full bg-surface-100-800-token">
-      <TreeView />
+      <TreeView classes="bg-surface-100-800-token" />
     </div>
   );
 

@@ -1,6 +1,5 @@
 import { For, Show, useContext } from 'solid-js';
 import { TreeContext, TreeProvider, TTree, TTreeNode } from './treeContext';
-import { Transition, TransitionGroup } from 'solid-transition-group';
 import { Icon } from 'solid-heroicons';
 import { chevronRight } from 'solid-heroicons/solid';
 
@@ -51,46 +50,51 @@ const tree: TTree = [
 
 interface NodeProps {
   tree: TTree
+  listClasses: string
 }
 
 function Node(props: NodeProps) {
-  const [state, { createNode, select, expand, deleteNode }] = useContext(TreeContext);
+  const [state, { select, expand }] = useContext(TreeContext);
 
   const showChildren = (node: TTreeNode) => state.expandedNodes[node.id] ?? false;
 
   return (
-      <ul>
-        <For each={props.tree}>{(node, i) =>
-          <li class="pointer">
-            <Show when={node.children} fallback={
-              <span class="inner"
-                onClick={() => select(node.id)}
-                classList={{ ['bg-primary-active-token']: node.id == state.selectedNode }}>
-                <span class="no-arrow" />
-                <span class="label">{node.label}</span>
+    <ul class={props.listClasses}>
+      <For each={props.tree}>{(node, i) =>
+        <li class="pointer">
+          <Show when={node.children} fallback={
+            <span class="inner"
+              onClick={() => select(node.id)}
+              classList={{ ['bg-primary-active-token']: node.id == state.selectedNode }}>
+              <span class="no-arrow" />
+              <span class="label">{node.label}</span>
+            </span>
+          }>
+            <span class="inner" onClick={() => expand(node.id)} >
+              <span class="arrow"
+                classList={{ ['arrowDown']: showChildren(node) }}>
+                <Icon path={chevronRight}></Icon>
               </span>
-            }>
-              <span class="inner" onClick={() => expand(node.id)} >
-                <span class="arrow"
-                  classList={{ ['arrowDown']: showChildren(node) }}>
-                    <Icon path={chevronRight}></Icon>
-                </span>
-                <span class="label">{node.label}</span>
-              </span>
-              <Show when={showChildren(node)}>
-                <Node tree={node.children!} />
-              </Show>
+              <span class="label">{node.label}</span>
+            </span>
+            <Show when={showChildren(node)}>
+              <Node tree={node.children!} listClasses={props.listClasses} />
             </Show>
-          </li>
-        }</For>
-      </ul>
+          </Show>
+        </li>
+      }</For>
+    </ul>
   );
 }
 
-export default function TreeView() {
+export interface TreeViewProps {
+  classes: string
+}
+
+export default function TreeView(props: TreeViewProps) {
   return (
     <TreeProvider tree={tree}>
-      <Node tree={tree} />
+      <Node tree={tree} listClasses={props.classes} />
     </TreeProvider>
   );
 }
