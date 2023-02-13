@@ -3,6 +3,7 @@ import AppBar from "./lib/skeleton/components/AppBar";
 import AppShell from "./lib/skeleton/components/AppShell";
 
 import "./App.css";
+import Editor from "./lib/components/editor/Editor";
 
 function App() {
 
@@ -13,12 +14,18 @@ function App() {
   );
 
   const header = (
-    <AppBar padding="p-2" lead={<span>(icon)</span>} trail={<span>(icon)</span>} />
+    <AppBar padding="p-2" shadow="drop-shadow" lead={<span>(icon)</span>} trail={<span>(icon)</span>} />
   );
 
   return (
-    <AppShell leftSideBarContent={leftSideBar} headerContent={header}>
-      <p>Page Content</p>
+    <AppShell 
+      leftSideBarContent={leftSideBar} 
+      leftSideBarClasses="shadow"
+      headerContent={header}
+      pageClasses="flex-1 flex flex-col min-h-0 bg-surface-100-900-token"
+      childrenClasses="flex-1 flex flex-col min-h-0 bg-surface-100-900-token"
+    >
+      <Editor/>
     </AppShell>
   );
 }
