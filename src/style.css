@@ -5,5 +5,10 @@
 @import 'lib/skeleton/themes/theme-hamlindigo.css';
 @import 'lib/skeleton/styles/all.css';
 
+:root {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 html { @apply dark; }
 html, body, #root { @apply h-full overflow-hidden; }

@@ -1,10 +1,15 @@
-import "./App.css";
+import TreeView from "./lib/components/treeview/TreeView";
 import AppBar from "./lib/skeleton/components/AppBar";
 import AppShell from "./lib/skeleton/components/AppShell";
 
+import "./App.css";
+
 function App() {
+
   const leftSideBar = (
-    <p>Side bar</p>
+    <div class="side-bar h-full bg-surface-100-800-token">
+      <TreeView />
+    </div>
   );
 
   const header = (
