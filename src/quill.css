@@ -9,8 +9,18 @@
   font-weight: var(--base-font-weight);
 }
 
+/* Editor */
+
 .ql-editor {
   border: none;
+}
+
+.dark .ql-editor {
+  background-color: rgb(var(--color-surface-900));
+}
+
+.ql-editor {
+  background-color: rgb(var(--color-surface-100));
 }
 
 /* Toolbar color fixes */

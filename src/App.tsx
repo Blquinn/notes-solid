@@ -4,6 +4,7 @@ import AppShell from "./lib/skeleton/components/AppShell";
 
 import "./App.css";
 import Editor from "./lib/components/editor/Editor";
+import LightSwitch from "./lib/skeleton/utlities/LightSwitch";
 
 function App() {
 
@@ -14,7 +15,7 @@ function App() {
   );
 
   const header = (
-    <AppBar padding="p-2" shadow="drop-shadow" lead={<span>(icon)</span>} trail={<span>(icon)</span>} />
+    <AppBar padding="p-2" shadow="drop-shadow" lead={<span>(icon)</span>} trail={<LightSwitch/>} />
   );
 
   return (

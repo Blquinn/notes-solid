@@ -11,5 +11,4 @@
   -webkit-user-select: none;
 }
 
-html { @apply dark; }
 html, body, #root { @apply h-full overflow-hidden; }
