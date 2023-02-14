@@ -11,8 +11,9 @@ import { Icon } from "solid-heroicons";
 function App() {
 
   const leftSideBar = (
-    <div class="side-bar h-full bg-surface-100-800-token">
-      <TreeView classes="bg-surface-100-800-token" />
+    <div class="side-bar h-full bg-surface-100-800-token p-2 flex flex-col">
+      <input type="search" class="input" placeholder="Search notes" />
+      <TreeView classes="bg-surface-100-800-token mt-2 flex-1 overflow-y-auto" />
     </div>
   );
 

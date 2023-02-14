@@ -58,7 +58,7 @@ export default function Editor() {
     <>
       <input 
         type="text" 
-        class="order-1 title text-2xl bg-surface-50-900-token border-none" 
+        class="order-1 title text-2xl bg-surface-100-800-token border-none" 
         placeholder="Note title..." 
         onInput={onTitleInput}
         onKeyDown={onTitleKey}
