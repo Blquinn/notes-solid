@@ -1,5 +1,7 @@
-import { onMount } from "solid-js";
+import { createSignal, onMount } from "solid-js";
 import Quill from 'quill';
+
+import './Editor.css';
 
 export default function Editor() {
 
@@ -27,6 +29,7 @@ export default function Editor() {
 
       ['clean']                                         // remove formatting button
     ];
+
     quill = new Quill(editor!, {
       modules: {
         toolbar: toolbarOptions
@@ -41,7 +44,26 @@ export default function Editor() {
     });
   });
 
+  const onTitleInput = (e: InputEvent) => {
+  }
+
+  const onTitleKey = (e: KeyboardEvent) => {
+    if (e.key == 'Enter') {
+      e.preventDefault();
+      quill?.focus();
+    }
+  }
+
   return (
-    <div class="flex-1 overflow-y-auto min-h-0" ref={editor} />
+    <>
+      <input 
+        type="text" 
+        class="order-1 title text-2xl bg-surface-50-900-token border-none" 
+        placeholder="Note title..." 
+        onInput={onTitleInput}
+        onKeyDown={onTitleKey}
+      />
+      <div class="order-2 flex-1 overflow-y-auto min-h-0" ref={editor} />
+    </>
   );
 }

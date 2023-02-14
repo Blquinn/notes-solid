@@ -16,21 +16,21 @@
   stroke: rgb(var(--theme-font-color-dark));
 }
 
-ul {
+.tree-view ul {
   list-style: none;
   display: flex;
   flex-direction: column;
   align-items: stretch;
 }
 
-ul li {
+.tree-view ul li {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: stretch;
 }
 
-li.pointer > ul {
+.tree-view li.pointer > ul {
   margin-left: 1rem !important;
 }
 

@@ -83,7 +83,7 @@ function Node(props: NodeProps) {
   );
 
   return (
-    <ul class={props.listClasses}>
+    <ul class={'tree-view ' + props.listClasses}>
       <For each={props.tree}>{(node, i) =>
         <li class="pointer">
           {node.children ? branchNode(node) : treeNode(node)}

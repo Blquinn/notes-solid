@@ -5,6 +5,8 @@ import AppShell from "./lib/skeleton/components/AppShell";
 import "./App.css";
 import Editor from "./lib/components/editor/Editor";
 import LightSwitch from "./lib/skeleton/utlities/LightSwitch";
+import { pencilSquare } from "solid-heroicons/solid";
+import { Icon } from "solid-heroicons";
 
 function App() {
 
@@ -14,8 +16,14 @@ function App() {
     </div>
   );
 
+  const newNoteButton = (
+    <button onClick={() => console.log('cleeeeiicckkkk')} class="h-6 w-6">
+      <Icon path={pencilSquare} />
+    </button>
+  );
+
   const header = (
-    <AppBar padding="p-2" shadow="drop-shadow" lead={<span>(icon)</span>} trail={<LightSwitch/>} />
+    <AppBar padding="p-2" shadow="drop-shadow" lead={newNoteButton} trail={<LightSwitch/>} />
   );
 
   return (
