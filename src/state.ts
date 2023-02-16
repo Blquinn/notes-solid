@@ -3,7 +3,7 @@ import * as uuid from 'uuid';
 import Delta from 'quill-delta';
 
 export interface Note {
-  body: Delta 
+  body: string;
 }
 
 export interface Directory {
@@ -14,7 +14,7 @@ const tree: TTree<Note> = [
   {
     id: uuid.v1(),
     label: "A Note",
-    data: { body: new Delta().insert('Hello world') },
+    data: { body: 'Hello world' },
   },
   {
     id: uuid.v1(),

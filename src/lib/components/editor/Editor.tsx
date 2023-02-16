@@ -1,61 +1,60 @@
 import { createEffect, createSignal, onMount, useContext } from "solid-js";
-import Quill from 'quill';
 
-import './Editor.css';
 import { NoteTreeContext } from "../../../state";
 import { getSelectedNode } from "../treeview/treeContext";
-import Delta from "quill-delta";
+import { EditorState, Plugin } from "prosemirror-state"
+import { EditorView } from "prosemirror-view"
+import { keymap } from "prosemirror-keymap"
+import { baseKeymap } from "prosemirror-commands"
+import { DOMParser } from "prosemirror-model"
+import { schema } from "./schema";
+import { buildKeymap } from "./keymap";
+import { buildInputRules } from "./inputrules";
+import { dropCursor } from 'prosemirror-dropcursor';
+import { gapCursor } from 'prosemirror-gapcursor';
+import { history } from 'prosemirror-history';
+
+// import styles from './Editor.module.css';
+import prosemirrorStyles from './Prosemirror.module.scss';
+// import './Prosemirror.module.scss';
 
 export default function Editor() {
 
   const [state, _] = useContext(NoteTreeContext);
 
   let editor: HTMLDivElement | undefined;
-  let quill: Quill | undefined;
+  let content: HTMLDivElement | undefined;
+  let editorView: EditorView | undefined;
 
   const [title, setTitle] = createSignal<string | undefined>(undefined);
 
   createEffect(() => {
     const node = getSelectedNode(state);
     setTitle(node?.label);
-    const body = node?.data?.body ?? new Delta().insert('');
-    quill?.setContents(body as any);
+    editorView?.pasteText(node?.data?.body ?? 'Nothing')
   }, [state.selectedNode])
 
   onMount(() => {
-    const toolbarOptions = [
-      ['bold', 'italic', 'underline', 'strike'],        // toggled buttons
-      ['blockquote', 'code-block'],
-
-      // [{ 'header': 1 }, { 'header': 2 }],               // custom button values
-      [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'list': 'check' }],
-      // [{ 'script': 'sub'}, { 'script': 'super' }],      // superscript/subscript
-      [{ 'indent': '-1' }, { 'indent': '+1' }],          // outdent/indent
-      // TODO: Set text direction based on locale
-      // [{ 'direction': 'rtl' }],                         // text direction
-
-      // [{ 'size': ['small', false, 'large', 'huge'] }],  // custom dropdown
-      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-
-      // [{ 'color': [] }, { 'background': [] }],          // dropdown with defaults from theme
-      // [{ 'font': [] }],
-      [{ 'align': [] }],
-
-      ['clean']                                         // remove formatting button
-    ];
-
-    quill = new Quill(editor!, {
-      modules: {
-        toolbar: toolbarOptions
-      },
-      theme: 'snow',
-    });
-
-    quill.on('text-change', function (delta, oldDelta, source) {
-      if (source == 'user') {
-        // dispatch('editor-updated');
-      }
-    });
+    editorView = new EditorView(editor!, {
+      state: EditorState.create({
+        doc: DOMParser.fromSchema(schema).parse(content!),
+        plugins: [
+          new Plugin({
+            view(view) {
+              return {
+                // update: (view, prevState) => dispatch('editor-updated'),
+              };
+            },
+          }),
+          history(),
+          buildInputRules(schema),
+          keymap(buildKeymap(schema)),
+          keymap(baseKeymap),
+          dropCursor(),
+          gapCursor(),
+        ]
+      })
+    })
   });
 
   const onTitleInput = (e: InputEvent) => {
@@ -64,7 +63,7 @@ export default function Editor() {
   const onTitleKey = (e: KeyboardEvent) => {
     if (e.key == 'Enter') {
       e.preventDefault();
-      quill?.focus();
+      editorView?.focus();
     }
   }
 
@@ -72,13 +71,14 @@ export default function Editor() {
     <>
       <input
         type="text"
-        class="order-1 title text-2xl bg-surface-50-900-token border-none"
+        class="title text-2xl bg-surface-50-900-token border-none"
         placeholder="Note title..."
         value={title() ?? ''}
         onInput={onTitleInput}
         onKeyDown={onTitleKey}
       />
-      <div class="order-2 flex-1 overflow-y-auto min-h-0" ref={editor} />
+      <div class={`${prosemirrorStyles.editor} flex-1 flex flex-col overflow-y-auto min-h-0`} ref={editor}></div>
+      <div ref={content} class="hidden"></div>
     </>
   );
 }

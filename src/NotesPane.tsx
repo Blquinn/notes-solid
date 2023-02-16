@@ -3,7 +3,7 @@ import TreeView from "./lib/components/treeview/TreeView";
 import { Note, NoteTreeContext } from "./state";
 
 export default function NotesPane() {
-  const treeCellContent = (node: TTreeNode<Note>) => (<span class="label">{node.label}</span>);
+  const treeCellContent = (node: TTreeNode<Note>) => node.label;
 
   return (
     <div class="side-bar h-full bg-surface-100-800-token">

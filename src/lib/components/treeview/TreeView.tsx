@@ -3,7 +3,7 @@ import { Context, TreeProvider, TTree, TTreeNode } from './treeContext';
 import { Icon } from 'solid-heroicons';
 import { chevronRight } from 'solid-heroicons/solid';
 
-import './TreeView.css';
+import styles from './TreeView.module.scss';
 
 export interface TreeViewProps<T> {
   index?: number[]
@@ -33,23 +33,23 @@ export default function TreeView<T>(props: TreeViewProps<T>) {
 
   const leafNode = (node: TTreeNode<T>) => (
     <span
-      class="inner"
+      class={styles.inner}
       onClick={() => onLeafSelected(node)}
       classList={{ ['bg-primary-active-token']: node.id == state.selectedNode }}
     >
-      <span class="no-arrow" />
-      {props.cellContent(node)}
+      <span class={styles.noArrow} />
+      <span class={styles.label}>{props.cellContent(node)}</span>
     </span>
   );
 
   const branchNode = (node: TTreeNode<T>, idx: Accessor<number>) => (
     <>
-      <span class="inner" onClick={() => onBranchClicked(node)} >
-        <span class="arrow"
+      <span class={styles.inner} onClick={() => onBranchClicked(node)} >
+        <span class={styles.arrow}
           classList={{ ['arrowDown']: showChildren(node) }}>
           <Icon path={chevronRight}></Icon>
         </span>
-        {props.cellContent(node)}
+        <span class={styles.label}>{props.cellContent(node)}</span>
       </span>
       <Show when={showChildren(node)}>
         <TreeView {...props} tree={node.children!} index={[...index, idx()]} />
@@ -58,9 +58,9 @@ export default function TreeView<T>(props: TreeViewProps<T>) {
   );
 
   return (
-    <ul class={'tree-view ' + props.listClasses}>
+    <ul class={styles.treeView + ' ' + props.listClasses}>
       <For each={tree}>{(node, i) =>
-        <li class="pointer">
+        <li class={styles.pointer}>
           {node.children ? branchNode(node, i) : leafNode(node)}
         </li>
       }</For>

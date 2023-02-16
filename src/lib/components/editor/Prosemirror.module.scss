@@ -1,0 +1,125 @@
+.editor {
+
+  :global {
+
+    .ProseMirror {
+      flex: 1;
+      position: relative;
+      border: none;
+      outline: none;
+      padding: .5em;
+
+
+      word-wrap: break-word;
+      white-space: pre-wrap;
+      white-space: break-spaces;
+      -webkit-font-variant-ligatures: none;
+      font-variant-ligatures: none;
+      font-feature-settings: "liga" 0;
+      /* the above doesn't seem to work in Edge */
+    }
+
+    .ProseMirror blockquote {
+      padding-left: 1em;
+      border-left: 3px solid rgb(212, 212, 212);
+      margin-left: 0;
+      margin-right: 0;
+    }
+
+    .ProseMirror pre {
+      white-space: pre-wrap;
+    }
+
+    .ProseMirror li {
+      position: relative;
+    }
+
+    .ProseMirror * {
+      margin-top: .25em;
+      margin-bottom: .25em;
+    }
+
+    // Remove list style reset
+
+    ul {
+      list-style-type: disc;
+      list-style-position: outside;
+      margin-left: 2rem;
+    }
+
+    ol {
+      list-style-type: decimal;
+      list-style-position: outside;
+      margin-left: 2rem;
+    }
+
+    ul ul,
+    ol ul {
+      list-style-type: circle;
+      list-style-position: outside;
+      margin-left: 2rem;
+    }
+
+    ol ol,
+    ul ol {
+      list-style-type: lower-latin;
+      list-style-position: outside;
+      margin-left: 2rem;
+    }
+
+    // End remove list style reset
+
+    .ProseMirror ol,
+    ul,
+    pre {
+      margin-top: .5em !important;
+      margin-bottom: .5em !important;
+    }
+
+    .ProseMirror-focused {
+      border: none;
+      outline: none;
+    }
+
+    .ProseMirror-hideselection *::selection {
+      background: transparent;
+    }
+
+    .ProseMirror-hideselection *::-moz-selection {
+      background: transparent;
+    }
+
+    .ProseMirror-hideselection {
+      caret-color: transparent;
+    }
+
+    .ProseMirror-selectednode {
+      outline: 2px solid #8cf;
+    }
+
+    /* Make sure li selections wrap around markers */
+
+    li.ProseMirror-selectednode {
+      outline: none;
+    }
+
+    li.ProseMirror-selectednode:after {
+      content: "";
+      position: absolute;
+      left: -32px;
+      right: -2px;
+      top: -2px;
+      bottom: -2px;
+      border: 2px solid #8cf;
+      pointer-events: none;
+    }
+
+    /* Protect against generic img rules */
+
+    img.ProseMirror-separator {
+      display: inline !important;
+      border: none !important;
+      margin: 0 !important;
+    }
+  }
+}
