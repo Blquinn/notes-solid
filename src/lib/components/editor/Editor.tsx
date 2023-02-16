@@ -14,9 +14,7 @@ import { dropCursor } from 'prosemirror-dropcursor';
 import { gapCursor } from 'prosemirror-gapcursor';
 import { history } from 'prosemirror-history';
 
-// import styles from './Editor.module.css';
-import prosemirrorStyles from './Prosemirror.module.scss';
-// import './Prosemirror.module.scss';
+import styles from './Editor.module.scss';
 
 export default function Editor() {
 
@@ -71,13 +69,13 @@ export default function Editor() {
     <>
       <input
         type="text"
-        class="title text-2xl bg-surface-50-900-token border-none"
+        class={`${styles.title} text-2xl bg-surface-50-900-token border-none`}
         placeholder="Note title..."
         value={title() ?? ''}
         onInput={onTitleInput}
         onKeyDown={onTitleKey}
       />
-      <div class={`${prosemirrorStyles.editor} flex-1 flex flex-col overflow-y-auto min-h-0`} ref={editor}></div>
+      <div class={`${styles.editor} flex-1 flex flex-col overflow-y-auto min-h-0`} ref={editor}></div>
       <div ref={content} class="hidden"></div>
     </>
   );
