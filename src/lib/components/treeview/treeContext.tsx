@@ -2,11 +2,11 @@ import { FragmentProps } from "solid-headless/dist/types/utils/Fragment";
 import { Context as SolidContext, createContext } from "solid-js";
 import { createStore } from "solid-js/store";
 
-export type TreePath = string;
+// export type TreePath = string;
 export type TreeIndex = number[];
 
 export type TTreeNode<T> = {
-  path: string;
+  id: string;
   label: string;
   data?: T;
   children?: TTreeNode<T>[];
@@ -16,8 +16,8 @@ export type TTree<T> = TTreeNode<T>[];
 
 export type TreeState<T> = {
   tree: TTree<T>;
-  expandedNodes: { [key: TreePath]: boolean };
-  selectedNode?: TreePath;
+  expandedNodes: { [key: string]: boolean }; // ID -> expanded
+  selectedNode?: string; // ID of selected node
 };
 
 export interface TreeProviderProps<T> extends FragmentProps {
@@ -28,8 +28,8 @@ export interface TreeProviderProps<T> extends FragmentProps {
 type TTreeContext<T> = [
   TreeState<T>,
   {
-    select(path: TreePath): void;
-    expand(path: TreePath): void;
+    select(id: string): void;
+    expand(id: string): void;
     update(index: TreeIndex, fn: (existing: T) => T): void;
   }
 ];
@@ -52,6 +52,23 @@ function* intersperse<T, R>(a: Array<T>, delim: R): Generator<T | R> {
   }
 }
 
+// function nodeByIndex<T>(tree: TTree<T>, idx: TreeIndex): TTreeNode<T> | undefined {
+//   if (idx.length < 1) {
+//     return undefined;
+//   }
+
+//   const node = tree[idx[0]];
+//   if (idx.length == 1) {
+//     return node;
+//   }
+
+//   if (!node.children) {
+//     return undefined;
+//   }
+
+//   return nodeByIndex(node.children, idx.slice(1));
+// }
+
 export function TreeProvider<T>(props: TreeProviderProps<T>) {
   const initialState: TreeState<T> = {
     tree: props.tree,
@@ -63,11 +80,11 @@ export function TreeProvider<T>(props: TreeProviderProps<T>) {
   const store: TTreeContext<T> = [
     state,
     {
-      select(path) {
-        setState("selectedNode", path);
+      select(id) {
+        setState("selectedNode", id);
       },
-      expand(path) {
-        setState('expandedNodes', path, (expanded) => !expanded);
+      expand(id) {
+        setState('expandedNodes', id, (expanded) => !expanded);
       },
       update(index, fn) {
         (setState as any)('tree', ...intersperse(index, 'children'), fn)

@@ -7,47 +7,48 @@ import Editor from "./lib/components/editor/Editor";
 import LightSwitch from "./lib/skeleton/utlities/LightSwitch";
 import { pencilSquare } from "solid-heroicons/solid";
 import { Icon } from "solid-heroicons";
-import { createTreeContext, TTree } from "./lib/components/treeview/treeContext";
+import { createTreeContext, TTree, TTreeNode } from "./lib/components/treeview/treeContext";
 import { Note } from "./state";
+import * as uuid from 'uuid';
 
 const tree: TTree<Note> = [
   {
-    path: 'A Note',
+    id: uuid.v1(),
     label: "A Note",
     data: { body: 'Foo' },
   },
   {
-    path: 'Another Note That has a Really Long Title Which Just Never Seems to End and It Goes on And on.',
+    id: uuid.v1(),
     label: "Another Note That has a Really Long Title Which Just Never Seems to End and It Goes on And on.",
   },
   {
-    path: 'A Notebook',
+    id: uuid.v1(),
     label: "A Notebook",
     children: [
       {
-        path: 'A Notebook/A Child Notebook',
+        id: uuid.v1(),
         label: "A Child Notebook",
         children: [
-          { path: 'A Notebook/A Child Notebook/A Note in A Child Notebook', label: "A Note in A Child Notebook" },
+          { id: uuid.v1(), label: "A Note in A Child Notebook" },
           {
-            path: 'A Notebook/A Child Notebook/Yet Another Child',
+            id: uuid.v1(),
             label: "Yet Another Child",
             children: [
-              { path: 'A Notebook/A Child Notebook/Yet Another Child/Foo', label: "Foo" },
-              { path: 'A Notebook/A Child Notebook/Yet Another Child/Bar', label: "Bar" },
-              { path: 'A Notebook/A Child Notebook/Yet Another Child/Bin', label: "Bin" }
+              { id: uuid.v1(), label: "Foo" },
+              { id: uuid.v1(), label: "Bar" },
+              { id: uuid.v1(), label: "Bin" }
             ],
           },
-          { path: 'A Notebook/A Child Notebook/Quux', label: "Quux" },
+          { id: uuid.v1(), label: "Quux" },
         ],
       },
       {
-        path: 'A Notebook/Another Notebook',
+        id: uuid.v1(),
         label: "Another Notebook",
         children: [
-          { path: 'A Notebook/Another Notebook/Foo', label: "Foo" },
-          { path: 'A Notebook/Another Notebook/Bar', label: "Bar" },
-          { path: 'A Notebook/Another Notebook/Baz', label: "Baz" }
+          { id: uuid.v1(), label: "Foo" },
+          { id: uuid.v1(), label: "Bar" },
+          { id: uuid.v1(), label: "Baz" }
         ],
       },
     ],
@@ -57,9 +58,11 @@ const tree: TTree<Note> = [
 function App() {
   const noteTreeContext = createTreeContext<Note>({tree, expandedNodes: {}});
 
+  const treeCellContent = (node: TTreeNode<Note>) => (<span class="label">{node.label}</span>);
+
   const leftSideBar = (
     <div class="side-bar h-full bg-surface-100-800-token">
-      <TreeView classes="bg-surface-100-800-token" context={noteTreeContext} />
+      <TreeView classes="bg-surface-100-800-token" context={noteTreeContext} cellContent={treeCellContent} />
     </div>
   );
 

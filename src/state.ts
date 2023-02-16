@@ -6,3 +6,7 @@ export interface Note {
   // body: Delta 
   body: string
 }
+
+export interface Directory {
+  name: string
+}
