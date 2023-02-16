@@ -1,12 +1,26 @@
-import { createSignal, onMount } from "solid-js";
+import { createEffect, createSignal, onMount, useContext } from "solid-js";
 import Quill from 'quill';
 
 import './Editor.css';
+import { NoteTreeContext } from "../../../state";
+import { getSelectedNode } from "../treeview/treeContext";
+import Delta from "quill-delta";
 
 export default function Editor() {
 
+  const [state, _] = useContext(NoteTreeContext);
+
   let editor: HTMLDivElement | undefined;
   let quill: Quill | undefined;
+
+  const [title, setTitle] = createSignal<string | undefined>(undefined);
+
+  createEffect(() => {
+    const node = getSelectedNode(state);
+    setTitle(node?.label);
+    const body = node?.data?.body ?? new Delta().insert('');
+    quill?.setContents(body as any);
+  }, [state.selectedNode])
 
   onMount(() => {
     const toolbarOptions = [
@@ -60,6 +74,7 @@ export default function Editor() {
         type="text" 
         class="order-1 title text-2xl bg-surface-50-900-token border-none" 
         placeholder="Note title..." 
+        value={title() ?? ''}
         onInput={onTitleInput}
         onKeyDown={onTitleKey}
       />

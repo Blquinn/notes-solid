@@ -1,19 +1,15 @@
-import { Context, TTreeNode } from "./lib/components/treeview/treeContext";
+import { TTreeNode } from "./lib/components/treeview/treeContext";
 import TreeView from "./lib/components/treeview/TreeView";
-import { Note } from "./state";
+import { Note, NoteTreeContext } from "./state";
 
-export interface NotesPaneProps {
-  noteTreeContext: Context<Note>
-}
-
-export default function NotesPane(props: NotesPaneProps) {
+export default function NotesPane() {
   const treeCellContent = (node: TTreeNode<Note>) => (<span class="label">{node.label}</span>);
 
   return (
     <div class="side-bar h-full bg-surface-100-800-token">
       <TreeView 
         listClasses="bg-surface-100-800-token" 
-        context={props.noteTreeContext} 
+        context={NoteTreeContext} 
         cellContent={treeCellContent}
       />
     </div>

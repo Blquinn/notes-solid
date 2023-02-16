@@ -25,6 +25,29 @@ export interface TreeProviderProps<T> extends FragmentProps {
   tree: TTree<T>;
 }
 
+function dfs<T>(tree: TTree<T>, id: string): TTreeNode<T> | undefined {
+  for (let node of tree) {
+    if (node.id == id) {
+      return node;
+    }
+    if (node.children) {
+      const n = dfs(node.children, id)
+      if (n) {
+        return n;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+export function getSelectedNode<T>(state: TreeState<T>): TTreeNode<T> | undefined {
+  if (!state.selectedNode) {
+    return undefined;
+  }
+  return dfs(state.tree, state.selectedNode);
+}
+
 type TTreeContext<T> = [
   TreeState<T>,
   {
@@ -51,23 +74,6 @@ function* intersperse<T, R>(a: Array<T>, delim: R): Generator<T | R> {
     yield x;
   }
 }
-
-// function nodeByIndex<T>(tree: TTree<T>, idx: TreeIndex): TTreeNode<T> | undefined {
-//   if (idx.length < 1) {
-//     return undefined;
-//   }
-
-//   const node = tree[idx[0]];
-//   if (idx.length == 1) {
-//     return node;
-//   }
-
-//   if (!node.children) {
-//     return undefined;
-//   }
-
-//   return nodeByIndex(node.children, idx.slice(1));
-// }
 
 export function TreeProvider<T>(props: TreeProviderProps<T>) {
   const initialState: TreeState<T> = {
