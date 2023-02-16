@@ -1,75 +1,50 @@
-import { For, Show, useContext } from 'solid-js';
-import { TreeContext, TreeProvider, TTree, TTreeNode } from './treeContext';
+import { Accessor, For, Show, useContext } from 'solid-js';
+import { Context, TreeProvider, TTree, TTreeNode } from './treeContext';
 import { Icon } from 'solid-heroicons';
 import { chevronRight } from 'solid-heroicons/solid';
 
 import './TreeView.css';
 
-const tree: TTree = [
-  {
-    id: 'A Note',
-    label: "A Note",
-  },
-  {
-    id: 'Another Note That has a Really Long Title Which Just Never Seems to End and It Goes on And on.',
-    label: "Another Note That has a Really Long Title Which Just Never Seems to End and It Goes on And on.",
-  },
-  {
-    id: "A Notebook",
-    label: "A Notebook",
-    children: [
-      {
-        id: 'A Notebook/A Child Notebook',
-        label: "A Child Notebook",
-        children: [
-          { id: 'A Notebook/A Child Notebook/A Note in A Child Notebook', label: "A Note in A Child Notebook" },
-          {
-            id: 'A Notebook/A Child Notebook/Yet Another Child',
-            label: "Yet Another Child",
-            children: [
-              { id: 'A Notebook/A Child Notebook/Yet Another Child/Foo', label: "Foo" },
-              { id: 'A Notebook/A Child Notebook/Yet Another Child/Bar', label: "Bar" },
-              { id: 'A Notebook/A Child Notebook/Yet Another Child/Bin', label: "Bin" }
-            ],
-          },
-          { id: 'A Notebook/A Child Notebook/Quux', label: "Quux" },
-        ],
-      },
-      {
-        id: 'A Notebook/Another Notebook',
-        label: "Another Notebook",
-        children: [
-          { id: 'A Notebook/Another Notebook/Foo', label: "Foo" },
-          { id: 'A Notebook/Another Notebook/Bar', label: "Bar" },
-          { id: 'A Notebook/Another Notebook/Baz', label: "Baz" }
-        ],
-      },
-    ],
-  },
-];
-
-interface NodeProps {
-  tree: TTree
+interface NodeProps<T> {
+  index: number[]
+  context: Context<T>
+  tree: TTree<T>
   listClasses: string
 }
 
-function Node(props: NodeProps) {
-  const [state, { select, expand }] = useContext(TreeContext);
+function Node<T>(props: NodeProps<T>) {
+  const [state, { select, update, expand }] = useContext(props.context);
 
-  const showChildren = (node: TTreeNode) => state.expandedNodes[node.id] ?? false;
+  const showChildren = (node: TTreeNode<T>) => state.expandedNodes[node.path] ?? false;
 
-  const treeNode = (node: TTreeNode) => (
-    <span class="inner"
-      onClick={() => select(node.id)}
-      classList={{ ['bg-primary-active-token']: node.id == state.selectedNode }}>
+  const onSelect = (node: TTreeNode<T>, idx: Accessor<number>) => {
+    // console.log(dfs(state.tree, node.path)!.path);
+    select(node.path);
+    // const i = [...props.index, idx()];
+    // update(i, (n) => {
+    //   return {...n, path: 'foo'}
+    // });
+  }
+
+  const onBranchClicked = (node: TTreeNode<T>) => {
+    console.info(node);
+    expand(node.path);
+  }
+
+  const leafNode = (node: TTreeNode<T>, idx: Accessor<number>) => (
+    <span 
+      class="inner"
+      onClick={() => onSelect(node, idx)}
+      classList={{ ['bg-primary-active-token']: node.path == state.selectedNode }}
+    >
       <span class="no-arrow" />
       <span class="label">{node.label}</span>
     </span>
   );
 
-  const branchNode = (node: TTreeNode) => (
+  const branchNode = (node: TTreeNode<T>, idx: Accessor<number>) => (
     <>
-      <span class="inner" onClick={() => expand(node.id)} >
+      <span class="inner" onClick={() => onBranchClicked(node)} >
         <span class="arrow"
           classList={{ ['arrowDown']: showChildren(node) }}>
           <Icon path={chevronRight}></Icon>
@@ -77,7 +52,7 @@ function Node(props: NodeProps) {
         <span class="label">{node.label}</span>
       </span>
       <Show when={showChildren(node)}>
-        <Node tree={node.children!} listClasses={props.listClasses} />
+        <Node tree={node.children!} listClasses={props.listClasses} context={props.context} index={[...props.index, idx()]} />
       </Show>
     </>
   );
@@ -86,21 +61,23 @@ function Node(props: NodeProps) {
     <ul class={'tree-view ' + props.listClasses}>
       <For each={props.tree}>{(node, i) =>
         <li class="pointer">
-          {node.children ? branchNode(node) : treeNode(node)}
+          {node.children ? branchNode(node, i) : leafNode(node, i)}
         </li>
       }</For>
     </ul>
   );
 }
 
-export interface TreeViewProps {
+export interface TreeViewProps<T> {
   classes: string
+  context: Context<T>
 }
 
-export default function TreeView(props: TreeViewProps) {
+export default function TreeView<T>(props: TreeViewProps<T>) {
+  const tree = props.context.defaultValue[0].tree;
   return (
-    <TreeProvider tree={tree}>
-      <Node tree={tree} listClasses={props.classes} />
+    <TreeProvider tree={tree} context={props.context}>
+      <Node tree={tree} listClasses={props.classes} context={props.context} index={[]} />
     </TreeProvider>
   );
 }

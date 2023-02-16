@@ -1,108 +1,81 @@
 import { FragmentProps } from "solid-headless/dist/types/utils/Fragment";
-import { createContext  } from "solid-js";
+import { Context as SolidContext, createContext } from "solid-js";
 import { createStore } from "solid-js/store";
 
+export type TreePath = string;
+export type TreeIndex = number[];
 
-export type TTreeNode = {
-  id: string;
+export type TTreeNode<T> = {
+  path: string;
   label: string;
-  children?: TTreeNode[];
+  data?: T;
+  children?: TTreeNode<T>[];
 }
 
-export type TTree = TTreeNode[];
+export type TTree<T> = TTreeNode<T>[];
 
-export type TreeState = {
-  tree: TTree;
-  expandedNodes: {[key: string]: boolean};
-  selectedNode?: string; // The selected node path.
+export type TreeState<T> = {
+  tree: TTree<T>;
+  expandedNodes: { [key: TreePath]: boolean };
+  selectedNode?: TreePath;
 };
 
-export interface TreeProviderProps extends FragmentProps {
-  tree: TTree;
+export interface TreeProviderProps<T> extends FragmentProps {
+  context: Context<T>;
+  tree: TTree<T>;
 }
 
-type TTreeContext = [
-  TreeState,
+type TTreeContext<T> = [
+  TreeState<T>,
   {
-    select(id: string): void;
-    expand(id: string): void;
-    deleteNode({
-      parentId,
-      childId,
-    }: {
-      parentId: string;
-      childId: string;
-    }): void;
-    createNode(id: string, label: string): void;
+    select(path: TreePath): void;
+    expand(path: TreePath): void;
+    update(index: TreeIndex, fn: (existing: T) => T): void;
   }
 ];
 
-// const deleteMany = (tree: TTree, ids: string[]) => {
-//   ids.forEach((id) => delete tree[id]);
-// };
+export type Context<T> = SolidContext<TTreeContext<T>>
 
-export const TreeContext = createContext<TTreeContext>([
-  { tree: [], expandedNodes: {} },
-  {} as any,
-]);
+export function createTreeContext<T>(initialTree?: TreeState<T>): Context<T> {
+  return createContext<TTreeContext<T>>([
+    initialTree ?? { tree: [], expandedNodes: {} },
+    {} as any,
+  ]);
+}
 
-export function TreeProvider(props: TreeProviderProps) {
-  const initialState: TreeState = {
+function* intersperse<T, R>(a: Array<T>, delim: R): Generator<T | R> {
+  let first = true;
+  for (const x of a) {
+    if (!first) yield delim;
+    first = false;
+    yield x;
+  }
+}
+
+export function TreeProvider<T>(props: TreeProviderProps<T>) {
+  const initialState: TreeState<T> = {
     tree: props.tree,
     expandedNodes: {},
   };
 
   const [state, setState] = createStore(initialState);
 
-  const store: TTreeContext = [
+  const store: TTreeContext<T> = [
     state,
     {
-      // increment(id) {
-      //   setState("tree", id, "counter", (value) => value + 1);
-      // },
-      // decrement(id) {
-      //   setState("tree", id, "counter", (value) => value - 1);
-      // },
-      select(id) {
-        setState("selectedNode", id);
+      select(path) {
+        setState("selectedNode", path);
       },
-      expand(id) {
-        setState('expandedNodes', id, (expanded) => !expanded);
+      expand(path) {
+        setState('expandedNodes', path, (expanded) => !expanded);
       },
-      createNode(id, label: string) {
-        // TODO: Implement
-        // setState(
-        //   produce((s) => {
-        //     // create Node
-        //     // s.nextId = newId;
-        //     s.tree[id] = { id: id, label: label, childIds: [] };
-        //     // add Child
-        //     s.tree[id].childIds.push(id);
-        //   })
-        // );
-      },
-      deleteNode({ parentId, childId }) {
-        // TODO: Implement
-        // setState(
-        //   produce((s) => {
-        //     // remove child
-        //     const parentNode = s.tree[parentId];
-        //     const foundChildIdx = parentNode.childIds.findIndex(
-        //       (id) => id === childId
-        //     )!;
-        //     parentNode.childIds.splice(foundChildIdx, 1);
-
-        //     // delete Node and all it's descendants
-        //     const ids = getAllDescendants(s.tree, childId);
-
-        //     deleteMany(s.tree, ids);
-        //   })
-        // );
+      update(index, fn) {
+        (setState as any)('tree', ...intersperse(index, 'children'), fn)
       },
     },
   ];
 
   return (
-    <TreeContext.Provider value={store}>{props.children}</TreeContext.Provider>
+    <props.context.Provider value={store}>{props.children}</props.context.Provider>
   );
 }
