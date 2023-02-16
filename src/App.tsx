@@ -1,4 +1,3 @@
-import TreeView from "./lib/components/treeview/TreeView";
 import AppBar from "./lib/skeleton/components/AppBar";
 import AppShell from "./lib/skeleton/components/AppShell";
 
@@ -7,9 +6,10 @@ import Editor from "./lib/components/editor/Editor";
 import LightSwitch from "./lib/skeleton/utlities/LightSwitch";
 import { pencilSquare } from "solid-heroicons/solid";
 import { Icon } from "solid-heroicons";
-import { createTreeContext, TTree, TTreeNode } from "./lib/components/treeview/treeContext";
+import { createTreeContext, TreeProvider, TTree, TTreeNode } from "./lib/components/treeview/treeContext";
 import { Note } from "./state";
 import * as uuid from 'uuid';
+import NotesPane from "./NotesPane";
 
 const tree: TTree<Note> = [
   {
@@ -56,15 +56,7 @@ const tree: TTree<Note> = [
 ];
 
 function App() {
-  const noteTreeContext = createTreeContext<Note>({tree, expandedNodes: {}});
-
-  const treeCellContent = (node: TTreeNode<Note>) => (<span class="label">{node.label}</span>);
-
-  const leftSideBar = (
-    <div class="side-bar h-full bg-surface-100-800-token">
-      <TreeView classes="bg-surface-100-800-token" context={noteTreeContext} cellContent={treeCellContent} />
-    </div>
-  );
+  const noteTreeContext = createTreeContext<Note>({ tree, expandedNodes: {} });
 
   const newNoteButton = (
     <button onClick={() => console.log('cleeeeiicckkkk')} class="h-6 w-6">
@@ -73,19 +65,21 @@ function App() {
   );
 
   const header = (
-    <AppBar padding="p-2" shadow="drop-shadow" lead={newNoteButton} trail={<LightSwitch/>} />
+    <AppBar padding="p-2" shadow="drop-shadow" lead={newNoteButton} trail={<LightSwitch />} />
   );
 
   return (
-    <AppShell 
-      leftSideBarContent={leftSideBar} 
-      leftSideBarClasses="shadow"
-      headerContent={header}
-      pageClasses="flex-1 flex flex-col min-h-0 bg-surface-100-900-token"
-      childrenClasses="flex-1 flex flex-col min-h-0 bg-surface-100-900-token"
-    >
-      <Editor/>
-    </AppShell>
+    <TreeProvider tree={tree} context={noteTreeContext}>
+      <AppShell
+        leftSideBarContent={<NotesPane noteTreeContext={noteTreeContext} />}
+        leftSideBarClasses="shadow"
+        headerContent={header}
+        pageClasses="flex-1 flex flex-col min-h-0 bg-surface-100-900-token"
+        childrenClasses="flex-1 flex flex-col min-h-0 bg-surface-100-900-token"
+      >
+        <Editor />
+      </AppShell>
+    </TreeProvider>
   );
 }
 
