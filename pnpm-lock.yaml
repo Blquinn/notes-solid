@@ -35,7 +35,7 @@ specifiers:
   uuid: ^9.0.0
   vite: ^4.0.0
   vite-plugin-solid: ^2.3.0
-  vite-plugin-solid-svg: ^0.6.0
+  vite-plugin-solid-svg: github:Blquinn/vite-plugin-solid-svg#remove-html-comments
 
 dependencies:
   '@tauri-apps/api': 1.2.0
@@ -74,7 +74,7 @@ devDependencies:
   uuid: 9.0.0
   vite: 4.1.1_qwczgscu5yinpidm7yywvcndf4
   vite-plugin-solid: 2.5.0_solid-js@1.6.10+vite@4.1.1
-  vite-plugin-solid-svg: 0.6.0_solid-js@1.6.10+vite@4.1.1
+  vite-plugin-solid-svg: github.com/Blquinn/vite-plugin-solid-svg/c24ec987f8e392a6b5c69306accd4a1e1d9d009c_solid-js@1.6.10+vite@4.1.1
 
 packages:
 
@@ -1919,17 +1919,6 @@ packages:
     resolution: {integrity: sha512-T1ab131NkP3BfXB7KUSgV7Rhu81R2id+L6NaJ7NypAAG5iV6gXnPpQE5RK1fvb+3JYsPTL+ihWna5sr5RN9gaQ==}
     dev: true
 
-  /vite-plugin-solid-svg/0.6.0_solid-js@1.6.10+vite@4.1.1:
-    resolution: {integrity: sha512-lKuRDmAG/Qm317dgbV1gwtHuzjk4WJQY1nsIBIywcEp8Sie1lzGKcXnfZEpe2itvNO+tKV8YVLkE+H2BEPcXcg==}
-    peerDependencies:
-      solid-js: ^1
-      vite: '>=2.4'
-    dependencies:
-      solid-js: 1.6.10
-      svgo: 2.8.0
-      vite: 4.1.1_qwczgscu5yinpidm7yywvcndf4
-    dev: true
-
   /vite-plugin-solid/2.5.0_solid-js@1.6.10+vite@4.1.1:
     resolution: {integrity: sha512-VneGd3RyFJvwaiffsqgymeMaofn0IzQLPwDzafTV2f1agoWeeJlk5VrI5WqT9BTtLe69vNNbCJWqLhHr9fOdDw==}
     peerDependencies:
@@ -2010,4 +1999,18 @@ packages:
   /yaml/1.10.2:
     resolution: {integrity: sha512-r3vXyErRCYJ7wg28yvBY5VSoAF8ZvlcW9/BwUzEtUsjvX/DKs24dIkuwjtuprwJJHsbyUbLApepYTR1BN4uHrg==}
     engines: {node: '>= 6'}
+    dev: true
+
+  github.com/Blquinn/vite-plugin-solid-svg/c24ec987f8e392a6b5c69306accd4a1e1d9d009c_solid-js@1.6.10+vite@4.1.1:
+    resolution: {tarball: https://codeload.github.com/Blquinn/vite-plugin-solid-svg/tar.gz/c24ec987f8e392a6b5c69306accd4a1e1d9d009c}
+    id: github.com/Blquinn/vite-plugin-solid-svg/c24ec987f8e392a6b5c69306accd4a1e1d9d009c
+    name: vite-plugin-solid-svg
+    version: 0.6.0
+    peerDependencies:
+      solid-js: ^1
+      vite: '>=2.4'
+    dependencies:
+      solid-js: 1.6.10
+      svgo: 2.8.0
+      vite: 4.1.1_qwczgscu5yinpidm7yywvcndf4
     dev: true

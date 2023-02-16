@@ -1,6 +1,6 @@
 import { defineConfig } from "vite";
 import solidPlugin from "vite-plugin-solid";
-import solidSvg from 'vite-plugin-solid-svg'
+import solidSvg from './node_modules/vite-plugin-solid-svg/package/index'
 
 export default defineConfig({
   plugins: [

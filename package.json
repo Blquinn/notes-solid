@@ -43,7 +43,7 @@
     "uuid": "^9.0.0",
     "vite": "^4.0.0",
     "vite-plugin-solid": "^2.3.0",
-    "vite-plugin-solid-svg": "^0.6.0"
+    "vite-plugin-solid-svg": "github:Blquinn/vite-plugin-solid-svg#remove-html-comments"
   },
   "dependencies": {
     "@tauri-apps/api": "^1.2.0",

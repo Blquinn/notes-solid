@@ -37,8 +37,8 @@ type Format =
 // TODO: Multiple heading levels.
 type BlockTypes =
   | "paragraph"
-  | "heading"
-  | "code_block";
+  | "code_block"
+  | "heading";
 
 const marksToFormats: { [key: string]: Format } = {
   em: "italic",
@@ -75,14 +75,14 @@ export interface EditorToolbarProps {
 function setsEqual<T>(s1: Set<T>, s2: Set<T>): boolean {
   if (s1.size != s2.size)
     return false;
-  
-    for (let val of s1) {
-      if (!s2.has(val)) {
-        return false;
-      }
-    }
 
-    return true;
+  for (let val of s1) {
+    if (!s2.has(val)) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 export default function EditorToolbar(props: EditorToolbarProps) {
@@ -123,7 +123,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
       setDisabledButtons(newDisabledButtons);
     }
   }
- 
+
   const unsub = props.viewUpdated.listen(onEditorUpdated);
   onCleanup(unsub);
 
@@ -171,12 +171,12 @@ export default function EditorToolbar(props: EditorToolbarProps) {
 
   const hasToggle = (name: Format) => () => toggledButtons().has(name);
 
-  const menuSectionClasses = 'flex gap-3';
+  const menuSectionClasses = 'flex gap-3 items-center';
   const iconClasses = 'stroke-current fill-current';
   const divider = () => (<span class="w-0.5 h-full bg-primary-800" />);
 
   return (
-    <div class="p-2 flex justify-start align-center gap-4 flex-flow-wrap bg-surface-100-800-token">
+    <div class="p-2 flex justify-start align-center gap-3 flex-flow-wrap bg-surface-100-800-token">
       <div class={menuSectionClasses}>
         <IconButton
           onClick={() => onClick("bold")}

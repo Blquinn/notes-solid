@@ -91,7 +91,7 @@ export default function Editor() {
       <input
         type="text"
         ref={titleEl}
-        class={`${styles.title} text-2xl bg-surface-50-900-token border-none`}
+        class={`${styles.title} text-3xl bg-surface-50-900-token border-none`}
         placeholder="Note title..."
         value={title() ?? ''}
         onInput={onTitleInput}
