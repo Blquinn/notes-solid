@@ -68,9 +68,10 @@ export default function Editor() {
 
   const onEditorKey = (e: KeyboardEvent) => {
     const selection = editorView?.state.selection;
-    if (e.key == 'Backspace' && selection?.empty && (selection?.$head.pos ?? -1) == 1) {
+    if (titleEl && e.key == 'Backspace' && selection?.empty && (selection?.$head.pos ?? -1) == 1) {
       e.preventDefault();
-      titleEl?.focus();
+      titleEl.focus();
+      titleEl.selectionStart = titleEl.selectionEnd = titleEl.value.length;
     }
 
     // TODO: Fix Tab presses breaking editor. (Does focus move to another element?)
