@@ -70,10 +70,10 @@ export default function Editor() {
 
   return (
     <>
-      <input 
-        type="text" 
-        class="order-1 title text-2xl bg-surface-50-900-token border-none" 
-        placeholder="Note title..." 
+      <input
+        type="text"
+        class="order-1 title text-2xl bg-surface-50-900-token border-none"
+        placeholder="Note title..."
         value={title() ?? ''}
         onInput={onTitleInput}
         onKeyDown={onTitleKey}

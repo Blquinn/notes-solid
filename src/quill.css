@@ -1,6 +1,8 @@
 @import 'quill/dist/quill.core.css';
 @import 'quill/dist/quill.snow.css';
 
+@import '@fortawesome/fontawesome-free/css/all.css';
+
 /* quill.core.css overrides */
 
 .ql-container {
@@ -67,15 +69,15 @@
 /* Checkboxes */
 
 .ql-editor ul[data-checked=true] > li::before {
-  font: normal normal normal var(--base-font-size) "Font Awesome 5 Free" !important;
+  font: normal normal normal 1rem "Font Awesome 6 Free" !important;
   content: '\f058' !important;
-  color: #5e72e4 !important;
+  cursor: pointer;
 }
 
 .ql-editor ul[data-checked=false] > li::before {
-  font: normal normal normal var(--base-font-size) "Font Awesome 5 Free" !important;
+  font: normal normal normal 1rem "Font Awesome 6 Free" !important;
   content: '\f111' !important;
-  color: #5e72e4 !important;
+  cursor: pointer;
 }
 
 .ql-editor ul[data-checked=true] > li {
