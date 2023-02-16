@@ -1,4 +1,4 @@
-import { createEffect, createSignal, onMount, useContext } from "solid-js";
+import { Accessor, createEffect, createSignal, onMount, Show, Signal, useContext } from "solid-js";
 
 import { NoteTreeContext } from "../../../state";
 import { getSelectedNode } from "../treeview/treeContext";
@@ -13,8 +13,10 @@ import { buildInputRules } from "./inputrules";
 import { dropCursor } from 'prosemirror-dropcursor';
 import { gapCursor } from 'prosemirror-gapcursor';
 import { history } from 'prosemirror-history';
+import { createEventBus } from '@solid-primitives/event-bus';
 
 import styles from './Editor.module.scss';
+import EditorToolbar from "./EditorToolbar";
 
 export default function Editor() {
 
@@ -24,6 +26,8 @@ export default function Editor() {
   let editor: HTMLDivElement | undefined;
   let content: HTMLDivElement | undefined;
   let editorView: EditorView | undefined;
+  let [editorViewMounted, setEditorViewMounted] = createSignal(false);
+  const editorChangeBus = createEventBus<void>();
 
   const [title, setTitle] = createSignal<string | undefined>(undefined);
 
@@ -41,7 +45,7 @@ export default function Editor() {
           new Plugin({
             view(view) {
               return {
-                // update: (view, prevState) => dispatch('editor-updated'),
+                update: (view, prevState) => editorChangeBus.emit(),
               };
             },
           }),
@@ -53,7 +57,9 @@ export default function Editor() {
           gapCursor(),
         ]
       })
-    })
+    });
+
+    setEditorViewMounted(true);
   });
 
   const onTitleInput = (e: InputEvent) => {
@@ -97,6 +103,9 @@ export default function Editor() {
         class={`${styles.editor} flex-1 flex flex-col overflow-y-auto min-h-0 bg-surface-50-900-token`} 
       ></div>
       <div ref={content} class="hidden"></div>
+      <Show when={editorViewMounted()}>
+        <EditorToolbar view={editorView!} viewUpdated={editorChangeBus} />
+      </Show>
     </>
   );
 }

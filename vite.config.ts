@@ -1,9 +1,18 @@
 import { defineConfig } from "vite";
 import solidPlugin from "vite-plugin-solid";
+import solidSvg from 'vite-plugin-solid-svg'
 
 export default defineConfig({
   plugins: [
     solidPlugin(),
+    solidSvg({
+      defaultAsComponent: true,
+
+      svgo: {
+        enabled: true, // optional, by default is true
+      //   svgoConfig: <svgo config>  // optional, if defined, the file svgo.config.js is not loaded.
+      },
+    }),
   ],
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
