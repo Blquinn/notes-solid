@@ -5,7 +5,7 @@ import { schema } from "./schema";
 import type { Attrs, MarkType, NodeType } from "prosemirror-model";
 import { wrapInList } from "prosemirror-schema-list";
 import IconButton from "../../skeleton/components/IconButton";
-import { Accessor, createSignal, For, onCleanup, Show } from "solid-js";
+import { Accessor, createEffect, createSignal, For, onCleanup, Show } from "solid-js";
 import { EventBus } from '@solid-primitives/event-bus';
 
 import Bold from "@fortawesome/fontawesome-free/svgs/solid/bold.svg";
@@ -19,7 +19,6 @@ import QuoteLeft from "@fortawesome/fontawesome-free/svgs/solid/quote-left.svg";
 import Paragraph from "@fortawesome/fontawesome-free/svgs/solid/paragraph.svg";
 import Heading from "@fortawesome/fontawesome-free/svgs/solid/heading.svg";
 
-import styles from './EditorToolbar.module.scss';
 
 const headingLevels = [1, 2, 3, 4, 5, 6];
 
@@ -100,7 +99,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
 
   const [toggledButtons, setToggledButtons] = createSignal<Set<Format>>(new Set());
   const [diasbledButtons, setDisabledButtons] = createSignal<Set<Format>>(new Set());
-  const [activeBlockType, setActiveBlockType] = createSignal<BlockType>({type: 'paragraph'});
+  const [activeBlockType, setActiveBlockType] = createSignal<BlockType>({ type: 'paragraph' });
 
   function onEditorUpdated() {
     // TODO(perf): Can we ignore some updates? Or maybe just debounce.
@@ -118,13 +117,13 @@ export default function EditorToolbar(props: EditorToolbarProps) {
     }
 
     if (isBlockTypeActive(props.view.state, schema.nodes.paragraph)) {
-      setActiveBlockType({type: 'paragraph'})
+      setActiveBlockType({ type: 'paragraph' })
     } else if (isBlockTypeActive(props.view.state, schema.nodes.code_block)) {
-      setActiveBlockType({type: 'code_block'})
+      setActiveBlockType({ type: 'code_block' })
     } else {
       for (let l of headingLevels) {
-        if (isBlockTypeActive(props.view.state, schema.nodes.heading, {level: l})) {
-          setActiveBlockType({type: 'heading', headingLevel: l});
+        if (isBlockTypeActive(props.view.state, schema.nodes.heading, { level: l })) {
+          setActiveBlockType({ type: 'heading', headingLevel: l });
           break;
         }
       }
@@ -247,12 +246,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           >
             <Paragraph class={iconClasses} />
           </IconButton>
-          <IconButton
-            onClick={() => {}}
-            toggled={() => activeBlockType().type == 'heading'}
-          >
-            <HeaderDropUp onClicked={(lvl) => onClick('heading', {level: lvl})} activeLevel={() => activeBlockType().headingLevel} />
-          </IconButton>
+          <HeaderDropUp onClicked={(lvl) => onClick('heading', { level: lvl })} activeBlockType={activeBlockType} />
           <IconButton
             onClick={() => onClick("code_block")}
             toggled={() => activeBlockType().type == 'code_block'}
@@ -266,28 +260,60 @@ export default function EditorToolbar(props: EditorToolbarProps) {
 }
 
 interface HeaderDropUpProps {
-  activeLevel: Accessor<number | undefined>
+  activeBlockType: Accessor<BlockType>
   onClicked: (level: number) => void;
 }
 
 function HeaderDropUp(props: HeaderDropUpProps) {
 
-  const liClassses = "cursor-pointer text-surface-600-300-token hover:bg-primary-hover-token rounded-token "
+  const liClassses = "cursor-pointer text-surface-600-300-token hover:bg-primary-hover-token rounded-token"
+
+  const [open, setOpen] = createSignal(false);
+  
+  let el: HTMLDivElement | undefined;
+
+  const onClick = (e: MouseEvent) => {
+    if (!el!.contains(e.target)) {
+      setOpen(false)
+    }
+  }
+
+  createEffect(() => {
+    if (open()) {
+      document.addEventListener('click', onClick);
+    } else {
+      document.removeEventListener('click', onClick)
+    }
+  }, [open]);
+
+  onCleanup(() => document.removeEventListener('click', onClick));
 
   return (
-    <div class={`${styles.popupParent} relative`}>
-      <Heading class={iconClasses} />
-      <div class={`${styles.popupContent} absolute bottom-full hidden card p-2`}>
-        <ul class="list">
-          <For each={[1, 2, 3, 4, 5, 6]}>{(lvl) => 
-            <li class={liClassses} classList={{
-              ['bg-primary-active-token !text-on-primary-token']: (props.activeLevel() == lvl),
-            }}>
-              <button onClick={() => props.onClicked(lvl)}>Heading {lvl}</button> 
-            </li> 
-          }</For>
-        </ul>
-      </div>
-    </div>
+    <span>
+      <IconButton
+        onClick={() => setOpen(!open())}
+        toggled={() => props.activeBlockType().type == 'heading'}
+      >
+        <Heading class={iconClasses} />
+      </IconButton>
+      <Show when={open()}>
+        <div class="relative w-0 h-0" ref={el}>
+          <div class="absolute bottom-full mb-6 card p-2">
+            <ul class="list">
+              <For each={[1, 2, 3, 4, 5, 6]}>{(lvl) =>
+                <li class={liClassses} classList={{
+                  ['bg-primary-active-token !text-on-primary-token']: (props.activeBlockType().headingLevel == lvl),
+                }}>
+                  <button onClick={() => {
+                    setOpen(false);
+                    props.onClicked(lvl)
+                  }}>Heading {lvl}</button>
+                </li>
+              }</For>
+            </ul>
+          </div>
+        </div>
+      </Show>
+    </span>
   );
 }
