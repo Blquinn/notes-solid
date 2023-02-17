@@ -1,4 +1,4 @@
-import { Accessor, createEffect, createSignal, onMount, Show, Signal, useContext } from "solid-js";
+import { createEffect, createSignal, on, onMount, Show, useContext } from "solid-js";
 
 import { NoteTreeContext } from "../../../state";
 import { getSelectedNode } from "../treeview/treeContext";
@@ -31,11 +31,11 @@ export default function Editor() {
 
   const [title, setTitle] = createSignal<string | undefined>(undefined);
 
-  createEffect(() => {
+  createEffect(on(() => state.selectedNode, () => {
     const node = getSelectedNode(state);
     setTitle(node?.label);
     editorView?.pasteText(node?.data?.body ?? 'Nothing')
-  }, [state.selectedNode])
+  }))
 
   onMount(() => {
     editorView = new EditorView(editor!, {
