@@ -46,7 +46,7 @@ export default function TreeView<T>(props: TreeViewProps<T>) {
     <>
       <span class={styles.inner} onClick={() => onBranchClicked(node)} >
         <span class={styles.arrow}
-          classList={{ ['arrowDown']: showChildren(node) }}>
+          classList={{ [styles.arrowDown]: showChildren(node) }}>
           <Icon path={chevronRight}></Icon>
         </span>
         <span class={styles.label}>{props.cellContent(node)}</span>

@@ -1,5 +1,3 @@
-// import IconButton from "../../complib/IconButton.svelte";
-// import FaIcon from "../../complib/FaIcon.svelte";
 import type { Command, EditorState, NodeSelection } from "prosemirror-state";
 import { setBlockType, toggleMark, wrapIn } from "prosemirror-commands";
 import type { EditorView } from "prosemirror-view";
@@ -7,7 +5,7 @@ import { schema } from "./schema";
 import type { Attrs, MarkType, NodeType } from "prosemirror-model";
 import { wrapInList } from "prosemirror-schema-list";
 import IconButton from "../../skeleton/components/IconButton";
-import { createSignal, onCleanup } from "solid-js";
+import { Accessor, createSignal, For, onCleanup, Show } from "solid-js";
 import { EventBus } from '@solid-primitives/event-bus';
 
 import Bold from "@fortawesome/fontawesome-free/svgs/solid/bold.svg";
@@ -20,6 +18,10 @@ import ListOl from "@fortawesome/fontawesome-free/svgs/solid/list-ol.svg";
 import QuoteLeft from "@fortawesome/fontawesome-free/svgs/solid/quote-left.svg";
 import Paragraph from "@fortawesome/fontawesome-free/svgs/solid/paragraph.svg";
 import Heading from "@fortawesome/fontawesome-free/svgs/solid/heading.svg";
+
+import styles from './EditorToolbar.module.scss';
+
+const headingLevels = [1, 2, 3, 4, 5, 6];
 
 type Format =
   | "bold"
@@ -39,6 +41,11 @@ type BlockTypes =
   | "paragraph"
   | "code_block"
   | "heading";
+
+type BlockType = {
+  type: BlockTypes
+  headingLevel?: number
+}
 
 const marksToFormats: { [key: string]: Format } = {
   em: "italic",
@@ -85,11 +92,15 @@ function setsEqual<T>(s1: Set<T>, s2: Set<T>): boolean {
   return true;
 }
 
+const menuSectionClasses = 'flex gap-3 items-center';
+const iconClasses = 'stroke-current fill-current';
+const divider = () => (<span class="w-0.5 h-full bg-primary-800" />);
+
 export default function EditorToolbar(props: EditorToolbarProps) {
 
   const [toggledButtons, setToggledButtons] = createSignal<Set<Format>>(new Set());
   const [diasbledButtons, setDisabledButtons] = createSignal<Set<Format>>(new Set());
-  const [activeBlockType, setActiveBlockType] = createSignal<BlockTypes>('paragraph');
+  const [activeBlockType, setActiveBlockType] = createSignal<BlockType>({type: 'paragraph'});
 
   function onEditorUpdated() {
     // TODO(perf): Can we ignore some updates? Or maybe just debounce.
@@ -107,11 +118,16 @@ export default function EditorToolbar(props: EditorToolbarProps) {
     }
 
     if (isBlockTypeActive(props.view.state, schema.nodes.paragraph)) {
-      setActiveBlockType('paragraph')
-    } else if (isBlockTypeActive(props.view.state, schema.nodes.heading)) {
-      setActiveBlockType('heading')
+      setActiveBlockType({type: 'paragraph'})
     } else if (isBlockTypeActive(props.view.state, schema.nodes.code_block)) {
-      setActiveBlockType('code_block')
+      setActiveBlockType({type: 'code_block'})
+    } else {
+      for (let l of headingLevels) {
+        if (isBlockTypeActive(props.view.state, schema.nodes.heading, {level: l})) {
+          setActiveBlockType({type: 'heading', headingLevel: l});
+          break;
+        }
+      }
     }
 
     const newDisabledButtons = new Set<Format>();
@@ -171,10 +187,6 @@ export default function EditorToolbar(props: EditorToolbarProps) {
 
   const hasToggle = (name: Format) => () => toggledButtons().has(name);
 
-  const menuSectionClasses = 'flex gap-3 items-center';
-  const iconClasses = 'stroke-current fill-current';
-  const divider = () => (<span class="w-0.5 h-full bg-primary-800" />);
-
   return (
     <div class="p-2 flex justify-start align-center gap-3 flex-flow-wrap bg-surface-100-800-token">
       <div class={menuSectionClasses}>
@@ -231,19 +243,19 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           <IconButton
             class="radio-item flex-auto text-base text-center cursor-pointer rounded-token hover:variant-soft "
             onClick={() => onClick("paragraph")}
-            toggled={() => activeBlockType() == 'paragraph'}
+            toggled={() => activeBlockType().type == 'paragraph'}
           >
             <Paragraph class={iconClasses} />
           </IconButton>
           <IconButton
-            onClick={() => onClick("heading")}
-            toggled={() => activeBlockType() == 'heading'}
+            onClick={() => {}}
+            toggled={() => activeBlockType().type == 'heading'}
           >
-            <Heading class={iconClasses} />
+            <HeaderDropUp onClicked={(lvl) => onClick('heading', {level: lvl})} activeLevel={() => activeBlockType().headingLevel} />
           </IconButton>
           <IconButton
             onClick={() => onClick("code_block")}
-            toggled={() => activeBlockType() == 'code_block'}
+            toggled={() => activeBlockType().type == 'code_block'}
           >
             <Code class={iconClasses} />
           </IconButton>
@@ -251,4 +263,31 @@ export default function EditorToolbar(props: EditorToolbarProps) {
       </div>
     </div>
   )
+}
+
+interface HeaderDropUpProps {
+  activeLevel: Accessor<number | undefined>
+  onClicked: (level: number) => void;
+}
+
+function HeaderDropUp(props: HeaderDropUpProps) {
+
+  const liClassses = "cursor-pointer text-surface-600-300-token hover:bg-primary-hover-token rounded-token "
+
+  return (
+    <div class={`${styles.popupParent} relative`}>
+      <Heading class={iconClasses} />
+      <div class={`${styles.popupContent} absolute bottom-full hidden card p-2`}>
+        <ul class="list">
+          <For each={[1, 2, 3, 4, 5, 6]}>{(lvl) => 
+            <li class={liClassses} classList={{
+              ['bg-primary-active-token !text-on-primary-token']: (props.activeLevel() == lvl),
+            }}>
+              <button onClick={() => props.onClicked(lvl)}>Heading {lvl}</button> 
+            </li> 
+          }</For>
+        </ul>
+      </div>
+    </div>
+  );
 }

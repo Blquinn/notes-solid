@@ -73,16 +73,20 @@ export default function Editor() {
   }
 
   const onEditorKey = (e: KeyboardEvent) => {
-    const selection = editorView?.state.selection;
-    if (titleEl && e.key == 'Backspace' && selection?.empty && (selection?.$head.pos ?? -1) == 1) {
-      e.preventDefault();
-      titleEl.focus();
-      titleEl.selectionStart = titleEl.selectionEnd = titleEl.value.length;
-    }
+    // const selection = editorView?.state.selection;
+    // if (titleEl && e.code == 'Backspace' && selection?.empty && (selection?.$head.pos ?? -1) == 1) {
+    //   console.log(selection)
+    //   e.preventDefault();
+    //   titleEl.focus();
+    //   titleEl.selectionStart = titleEl.selectionEnd = titleEl.value.length;
+    //   e.stopPropagation();
+    //   return;
+    // }
 
     // TODO: Fix Tab presses breaking editor. (Does focus move to another element?)
-    if (e.key == 'Tab') {
+    if (e.code == 'Tab') {
       e.preventDefault();
+      return;
     }
   }
 
@@ -91,7 +95,7 @@ export default function Editor() {
       <input
         type="text"
         ref={titleEl}
-        class={`${styles.title} text-3xl bg-surface-50-900-token border-none`}
+        class={`${styles.title} text-3xl bg-surface-50-900-token border-none text-ellipsis`}
         placeholder="Note title..."
         value={title() ?? ''}
         onInput={onTitleInput}
