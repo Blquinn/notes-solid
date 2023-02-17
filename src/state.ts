@@ -1,5 +1,6 @@
 import { createTreeContext, TTree } from "./lib/components/treeview/treeContext";
 import * as uuid from 'uuid';
+import { createSignal } from "solid-js";
 
 export interface Note {
   body: string;
@@ -54,4 +55,10 @@ const tree: TTree<Note> = [
 ];
 
 
+const [notesDir, setNotesDir] = createSignal('/tmp/notes-test-dir', { equals: false });
+
 export const NoteTreeContext = createTreeContext<Note>({ tree, expandedNodes: {} });
+
+export {
+  notesDir, setNotesDir
+}

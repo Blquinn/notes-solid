@@ -7,8 +7,10 @@ import LightSwitch from "./lib/skeleton/utlities/LightSwitch";
 import { pencilSquare } from "solid-heroicons/solid";
 import { Icon } from "solid-heroicons";
 import { TreeProvider } from "./lib/components/treeview/treeContext";
-import { NoteTreeContext } from "./state";
+import { notesDir, NoteTreeContext } from "./state";
 import NotesPane from "./NotesPane";
+import { loadNotesTree } from "./lib/persistence";
+import { invoke } from "@tauri-apps/api";
 
 
 function App() {
@@ -17,6 +19,13 @@ function App() {
       <Icon path={pencilSquare} />
     </button>
   );
+
+  (async () => {
+    const files = await invoke("search_notes", { dir: notesDir(), phrase: 'IS A PARA' });
+    console.log(files)
+  })();
+
+  loadNotesTree();
 
   const header = (
     <AppBar padding="p-2" shadow="drop-shadow" lead={newNoteButton} trail={<LightSwitch />} />

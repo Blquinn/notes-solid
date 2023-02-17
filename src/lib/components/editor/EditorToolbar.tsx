@@ -187,7 +187,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
   const hasToggle = (name: Format) => () => toggledButtons().has(name);
 
   return (
-    <div class="p-2 flex justify-start align-center gap-3 flex-flow-wrap bg-surface-100-800-token">
+    <div class="p-2 flex justify-center align-center gap-3 flex-flow-wrap bg-surface-100-800-token">
       <div class={menuSectionClasses}>
         <IconButton
           onClick={() => onClick("bold")}

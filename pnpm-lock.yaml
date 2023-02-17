@@ -6,10 +6,12 @@ specifiers:
   '@tailwindcss/forms': ^0.5.3
   '@tauri-apps/api': ^1.2.0
   '@tauri-apps/cli': ^1.2.2
+  '@types/lodash.debounce': ^4.0.7
   '@types/node': ^18.7.10
   '@types/quill': ^2.0.10
   '@types/uuid': ^9.0.0
   autoprefixer: ^10.4.13
+  lodash.debounce: ^4.0.8
   orderedmap: ^2.1.0
   postcss: ^8.4.21
   prosemirror-commands: ^1.5.0
@@ -44,10 +46,12 @@ devDependencies:
   '@solid-primitives/event-bus': 1.0.0_solid-js@1.6.10
   '@tailwindcss/forms': 0.5.3_tailwindcss@3.2.6
   '@tauri-apps/cli': 1.2.3
+  '@types/lodash.debounce': 4.0.7
   '@types/node': 18.13.0
   '@types/quill': 2.0.10
   '@types/uuid': 9.0.0
   autoprefixer: 10.4.13_postcss@8.4.21
+  lodash.debounce: 4.0.8
   orderedmap: 2.1.0
   postcss: 8.4.21
   prosemirror-commands: 1.5.0
@@ -796,6 +800,16 @@ packages:
     engines: {node: '>=10.13.0'}
     dev: true
 
+  /@types/lodash.debounce/4.0.7:
+    resolution: {integrity: sha512-X1T4wMZ+gT000M2/91SYj0d/7JfeNZ9PeeOldSNoE/lunLeQXKvkmIumI29IaKMotU/ln/McOIvgzZcQ/3TrSA==}
+    dependencies:
+      '@types/lodash': 4.14.191
+    dev: true
+
+  /@types/lodash/4.14.191:
+    resolution: {integrity: sha512-BdZ5BCCvho3EIXw6wUCXHe7rS53AIDPLE+JzwgT+OsJk53oBfbSmZZ7CX4VaRoN78N+TJpFi9QPlfIVNmJYWxQ==}
+    dev: true
+
   /@types/node/18.13.0:
     resolution: {integrity: sha512-gC3TazRzGoOnoKAhUx+Q0t8S9Tzs74z7m0ipwGpSqQrleP14hKxP4/JUeEQcD3W1/aIpnWl8pHowI7WokuZpXg==}
     dev: true
@@ -1264,6 +1278,10 @@ packages:
 
   /lodash.clonedeep/4.5.0:
     resolution: {integrity: sha512-H5ZhCF25riFd9uB5UCkVKo61m3S/xZk1x4wA6yp/L3RFP6Z/eHH1ymQcGLo7J3GMPfm0V/7m1tryHuGVxpqEBQ==}
+    dev: true
+
+  /lodash.debounce/4.0.8:
+    resolution: {integrity: sha512-FT1yDzDYEoYWhnSGnpE/4Kj1fLZkDFyqRb7fNt6FdYOSxlUWAtp42Eh6Wb0rGIv/m9Bgo7x4GhQbm5Ys4SG5ow==}
     dev: true
 
   /lodash.isequal/4.5.0:

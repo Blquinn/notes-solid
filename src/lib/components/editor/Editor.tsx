@@ -18,6 +18,22 @@ import { createEventBus } from '@solid-primitives/event-bus';
 import styles from './Editor.module.scss';
 import EditorToolbar from "./EditorToolbar";
 
+import debounce from 'lodash.debounce';
+import { deserializeDocument, serializeDocument } from "../../persistence";
+
+// TODO: Flush debounce when document is changing.
+const saveDebounce = debounce((view: EditorView) => {
+  let str = serializeDocument({
+    title: 'Foo',
+    createdAt: '1.2.3',
+    updatedAt: '2.3.4',
+  }, view.state.doc.content);
+
+  console.log(str)
+  let res = deserializeDocument(str)
+  console.log(res)
+}, 300)
+
 export default function Editor() {
 
   const [state, _] = useContext(NoteTreeContext);
@@ -45,7 +61,10 @@ export default function Editor() {
           new Plugin({
             view(view) {
               return {
-                update: (view, prevState) => editorChangeBus.emit(),
+                update: (view, prevState) => {
+                  saveDebounce(view);
+                  editorChangeBus.emit();
+                },
               };
             },
           }),
