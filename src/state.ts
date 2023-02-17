@@ -1,6 +1,5 @@
 import { createTreeContext, TTree } from "./lib/components/treeview/treeContext";
 import * as uuid from 'uuid';
-import Delta from 'quill-delta';
 
 export interface Note {
   body: string;
