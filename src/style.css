@@ -4,7 +4,6 @@
 
 @import 'lib/skeleton/themes/theme-hamlindigo.css';
 @import 'lib/skeleton/styles/all.css';
-@import './quill.css';
 
 :root {
   user-select: none;
