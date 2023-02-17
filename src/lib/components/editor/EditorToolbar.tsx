@@ -227,24 +227,27 @@ export default function EditorToolbar(props: EditorToolbarProps) {
       {divider()}
 
       <div class={menuSectionClasses}>
-        <IconButton
-          onClick={() => onClick("paragraph")}
-          disabled={() => activeBlockType() == 'paragraph'}
-        >
-          <Paragraph class={iconClasses} />
-        </IconButton>
-        <IconButton
-          onClick={() => onClick("heading")}
-          disabled={() => activeBlockType() == 'heading'}
-        >
-          <Heading class={iconClasses} />
-        </IconButton>
-        <IconButton
-          onClick={() => onClick("code_block")}
-          disabled={() => activeBlockType() == 'code_block'}
-        >
-          <Code class={iconClasses} />
-        </IconButton>
+        <div class="radio-group p-1 inline-flex bg-surface-200-700-token border-token border-surface-400-500-token space-x-1 rounded-token ">
+          <IconButton
+            class="radio-item flex-auto text-base text-center cursor-pointer rounded-token hover:variant-soft "
+            onClick={() => onClick("paragraph")}
+            toggled={() => activeBlockType() == 'paragraph'}
+          >
+            <Paragraph class={iconClasses} />
+          </IconButton>
+          <IconButton
+            onClick={() => onClick("heading")}
+            toggled={() => activeBlockType() == 'heading'}
+          >
+            <Heading class={iconClasses} />
+          </IconButton>
+          <IconButton
+            onClick={() => onClick("code_block")}
+            toggled={() => activeBlockType() == 'code_block'}
+          >
+            <Code class={iconClasses} />
+          </IconButton>
+        </div>
       </div>
     </div>
   )
