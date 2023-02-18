@@ -23,7 +23,7 @@ function Shell() {
     <AppBar padding="p-2" shadow="drop-shadow" lead={newNoteButton} trail={<LightSwitch />} />
   );
 
-  const [_, store] = useContext(NoteTreeContext);
+  const [state, store] = useContext(NoteTreeContext);
 
   onMount(async () => {
     store.replaceTree(await loadNotesTree());
@@ -37,7 +37,13 @@ function Shell() {
       pageClasses="flex-1 flex flex-col min-h-0 bg-surface-100-900-token"
       childrenClasses="flex-1 flex flex-col min-h-0 bg-surface-100-900-token"
     >
-      <Editor />
+      {state.selectedNode ? (
+        <Editor />
+      ) : (
+        <div class="h-full w-full flex justify-center items-center">
+          <h2>No note selected</h2>
+        </div>
+      )}
     </AppShell>
   );
 }
