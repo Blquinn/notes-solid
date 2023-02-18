@@ -3,6 +3,8 @@
     windows_subsystem = "windows"
 )]
 
+use std::{path::{Path, self}, ffi::OsStr};
+
 use quick_xml::{events::Event, Reader};
 use rayon::prelude::*;
 use regex::RegexBuilder;
@@ -24,12 +26,17 @@ fn is_hidden(entry: &DirEntry) -> bool {
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct NoteMeta {
-    path: String,
+    id: String,
+    path: Vec<String>,
     title: String,
+    is_directory: bool,
 }
 
 #[tauri::command]
 fn load_notes_dir(dir: &str) -> Vec<NoteMeta> {
+    let dir_path = Path::new(dir);
+    let path_sep = OsStr::new(&path::MAIN_SEPARATOR.to_string()).to_owned();
+
     return WalkDir::new(dir)
         .into_iter()
         .filter_entry(|e| !is_hidden(e))
@@ -37,7 +44,27 @@ fn load_notes_dir(dir: &str) -> Vec<NoteMeta> {
         .into_par_iter()
         .flatten()
         .map(|e| {
-            let path = e.path().to_str().unwrap().to_owned();
+            let path = Path::new(e.path().to_str().unwrap());
+
+            if dir_path == path {
+                return None
+            }
+
+            let mut nm = NoteMeta::default();
+
+            nm.path = Path::new(&path)
+                .strip_prefix(dir)
+                .unwrap()
+                .iter()
+                .filter(|p| *p != path_sep)
+                .map(|os| os.to_str().unwrap().to_owned())
+                .collect();
+
+            if e.file_type().is_dir() {
+                nm.is_directory = true;
+                nm.title = path.file_name().unwrap().to_str().unwrap().to_owned();
+                return Some(nm);
+            }
 
             let mut reader = match Reader::from_file(&path) {
                 Ok(reader) => reader,
@@ -46,62 +73,57 @@ fn load_notes_dir(dir: &str) -> Vec<NoteMeta> {
 
             let mut buf = Vec::new();
 
-            let mut nm = NoteMeta::default();
-            nm.path = path;
-
             let mut in_title = false;
 
             loop {
                 match reader.read_event_into(&mut buf) {
-                    Ok(Event::Start(ref e)) => {
-                        match e.name().as_ref() {
-                            b"title" => {
-                                in_title = true;
-                            },
-                            _ => (),
+                    Ok(Event::Start(ref e)) => match e.name().as_ref() {
+                        b"title" => {
+                            in_title = true;
                         }
-                    }
+                        _ => (),
+                    },
                     Ok(Event::Empty(e)) => {
                         match e.name().as_ref() {
                             b"meta" => {
-                                // let name = e
-                                //     .attributes()
-                                //     .flatten()
-                                //     .find(|a| a.key.as_ref() == b"name")
-                                //     .map(|a| {
-                                //         reader
-                                //             .decoder()
-                                //             .decode(a.value.as_ref())
-                                //             .unwrap()
-                                //             .as_ref()
-                                //             .to_owned()
-                                //     })
-                                //     .unwrap();
+                                let name = e
+                                    .attributes()
+                                    .flatten()
+                                    .find(|a| a.key.as_ref() == b"name")
+                                    .map(|a| {
+                                        reader
+                                            .decoder()
+                                            .decode(a.value.as_ref())
+                                            .unwrap()
+                                            .as_ref()
+                                            .to_owned()
+                                    })
+                                    .unwrap();
 
-                                // let content = e
-                                //     .attributes()
-                                //     .flatten()
-                                //     .find(|a| a.key.as_ref() == b"content")
-                                //     .map(|a| {
-                                //         reader
-                                //             .decoder()
-                                //             .decode(a.value.as_ref())
-                                //             .unwrap()
-                                //             .as_ref()
-                                //             .to_owned()
-                                //     })
-                                //     .unwrap();
-                                
-                                // match name.as_ref() {
-                                //     "createdAt" => {
-                                //         println!("Parsed createdAt {}", content);
-                                //     },
-                                //     "updatedAt" => {
-                                //         println!("Parsed updatedAt {}", content);
-                                //     },
-                                //     _ => {}
-                                // }
-                            },
+                                let content = e
+                                    .attributes()
+                                    .flatten()
+                                    .find(|a| a.key.as_ref() == b"content")
+                                    .map(|a| {
+                                        reader
+                                            .decoder()
+                                            .decode(a.value.as_ref())
+                                            .unwrap()
+                                            .as_ref()
+                                            .to_owned()
+                                    })
+                                    .unwrap();
+
+                                match name.as_ref() {
+                                    "id" => {
+                                        nm.id = content;
+                                    },
+                                    // "updatedAt" => {
+                                    //     println!("Parsed updatedAt {}", content);
+                                    // },
+                                    _ => {}
+                                }
+                            }
                             _ => (),
                         }
                     }
@@ -110,15 +132,13 @@ fn load_notes_dir(dir: &str) -> Vec<NoteMeta> {
                             nm.title = e.unescape().unwrap().as_ref().to_owned();
                         }
                     }
-                    Ok(Event::End(ref e)) => {
-                        match e.name().as_ref() {
-                            b"title" => {
-                                in_title = false;
-                            }
-                            b"head" => break,
-                            _ => ()
+                    Ok(Event::End(ref e)) => match e.name().as_ref() {
+                        b"title" => {
+                            in_title = false;
                         }
-                    }
+                        b"head" => break,
+                        _ => (),
+                    },
                     Ok(Event::Eof) => break, // exits the loop when reaching end of file
                     Err(_) => return None,
                     _ => (), // There are several other `Event`s we do not consider here

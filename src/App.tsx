@@ -7,43 +7,47 @@ import LightSwitch from "./lib/skeleton/utlities/LightSwitch";
 import { pencilSquare } from "solid-heroicons/solid";
 import { Icon } from "solid-heroicons";
 import { TreeProvider } from "./lib/components/treeview/treeContext";
-import { notesDir, NoteTreeContext } from "./state";
+import { NoteTreeContext } from "./state";
 import NotesPane from "./NotesPane";
+import { onMount, useContext } from "solid-js";
 import { loadNotesTree } from "./lib/persistence";
-import { invoke } from "@tauri-apps/api";
 
-
-function App() {
+function Shell() {
   const newNoteButton = (
     <button onClick={() => console.log('cleeeeiicckkkk')} class="h-6 w-6">
       <Icon path={pencilSquare} />
     </button>
   );
 
-  (async () => {
-    const files = await invoke("search_notes", { dir: notesDir(), phrase: 'IS A PARA' });
-    console.log(files)
-  })();
-
-  loadNotesTree();
-
   const header = (
     <AppBar padding="p-2" shadow="drop-shadow" lead={newNoteButton} trail={<LightSwitch />} />
   );
 
-  const tree = NoteTreeContext.defaultValue[0].tree
+  const [_, store] = useContext(NoteTreeContext);
+
+  onMount(async () => {
+    store.replaceTree(await loadNotesTree());
+  });
 
   return (
-    <TreeProvider tree={tree} context={NoteTreeContext}>
-      <AppShell
-        leftSideBarContent={<NotesPane />}
-        leftSideBarClasses="shadow"
-        headerContent={header}
-        pageClasses="flex-1 flex flex-col min-h-0 bg-surface-100-900-token"
-        childrenClasses="flex-1 flex flex-col min-h-0 bg-surface-100-900-token"
-      >
-        <Editor />
-      </AppShell>
+    <AppShell
+      leftSideBarContent={<NotesPane />}
+      leftSideBarClasses="shadow"
+      headerContent={header}
+      pageClasses="flex-1 flex flex-col min-h-0 bg-surface-100-900-token"
+      childrenClasses="flex-1 flex flex-col min-h-0 bg-surface-100-900-token"
+    >
+      <Editor />
+    </AppShell>
+  );
+}
+
+function App() {
+  const [state, _] = NoteTreeContext.defaultValue;
+
+  return (
+    <TreeProvider tree={state.tree} context={NoteTreeContext}>
+      <Shell />
     </TreeProvider>
   );
 }

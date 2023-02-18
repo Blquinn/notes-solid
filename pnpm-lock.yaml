@@ -8,11 +8,13 @@ specifiers:
   '@tauri-apps/cli': ^1.2.2
   '@types/lodash.debounce': ^4.0.7
   '@types/node': ^18.7.10
+  '@types/path-browserify': ^1.0.0
   '@types/quill': ^2.0.10
   '@types/uuid': ^9.0.0
   autoprefixer: ^10.4.13
   lodash.debounce: ^4.0.8
   orderedmap: ^2.1.0
+  path-browserify: ^1.0.1
   postcss: ^8.4.21
   prosemirror-commands: ^1.5.0
   prosemirror-dropcursor: ^1.6.1
@@ -48,11 +50,13 @@ devDependencies:
   '@tauri-apps/cli': 1.2.3
   '@types/lodash.debounce': 4.0.7
   '@types/node': 18.13.0
+  '@types/path-browserify': 1.0.0
   '@types/quill': 2.0.10
   '@types/uuid': 9.0.0
   autoprefixer: 10.4.13_postcss@8.4.21
   lodash.debounce: 4.0.8
   orderedmap: 2.1.0
+  path-browserify: 1.0.1
   postcss: 8.4.21
   prosemirror-commands: 1.5.0
   prosemirror-dropcursor: 1.7.0
@@ -814,6 +818,10 @@ packages:
     resolution: {integrity: sha512-gC3TazRzGoOnoKAhUx+Q0t8S9Tzs74z7m0ipwGpSqQrleP14hKxP4/JUeEQcD3W1/aIpnWl8pHowI7WokuZpXg==}
     dev: true
 
+  /@types/path-browserify/1.0.0:
+    resolution: {integrity: sha512-XMCcyhSvxcch8b7rZAtFAaierBYdeHXVvg2iYnxOV0MCQHmPuRRmGZPFDRzPayxcGiiSL1Te9UIO+f3cuj0tfw==}
+    dev: true
+
   /@types/quill/2.0.10:
     resolution: {integrity: sha512-L6OHONEj2v4NRbWQOsn7j1N0SyzhRR3M4g1M6j/uuIwIsIW2ShWHhwbqNvH8hSmVktzqu0lITfdnqVOQ4qkrhA==}
     dependencies:
@@ -1368,6 +1376,10 @@ packages:
 
   /parchment/1.1.4:
     resolution: {integrity: sha512-J5FBQt/pM2inLzg4hEWmzQx/8h8D0CiDxaG3vyp9rKrQRSDgBlhjdP5jQGgosEajXPSQouXGHOmVdgo7QmJuOg==}
+    dev: true
+
+  /path-browserify/1.0.1:
+    resolution: {integrity: sha512-b7uo2UCUOYZcnF/3ID0lulOJi/bafxa1xPe7ZPsammBSpjSWQkjNxlt635YGS2MiR9GjvuXCtz2emr3jbsz98g==}
     dev: true
 
   /path-parse/1.0.7:

@@ -1,13 +1,10 @@
 import { invoke } from "@tauri-apps/api";
 import { DOMParser as ProseDOMParser, DOMSerializer, Fragment, Node as ProseNode } from "prosemirror-model";
-import { Note, notesDir } from "../state";
+import { NoteMeta, notesDir } from "../state";
 import { schema } from "./components/editor/schema";
-
-export type NoteMeta = {
-  title: string
-  createdAt: string
-  updatedAt: string
-}
+import { TTree, TTreeNode } from "./components/treeview/treeContext";
+import { readTextFile, writeTextFile } from '@tauri-apps/api/fs';
+import { join } from '@tauri-apps/api/path';
 
 export const serializeDocument = (meta: NoteMeta, content: Fragment) => {
   const d = document.createDocumentFragment();
@@ -48,21 +45,73 @@ const getMetaContent = (head: HTMLHeadElement, name: string): string => {
   return (head.querySelector(`meta[name="${name}"]`) as HTMLMetaElement).content;
 }
 
-export const deserializeDocument = (doc: string): ParseResult => {
+export const deserializeDocument = (path: string[], doc: string): ParseResult => {
   const dom = new DOMParser().parseFromString(doc, 'application/xhtml+xml');
   const head = dom.head;
 
   return {
     note: {
+      path,
+      id: getMetaContent(head, 'id'),
       title: getMetaContent(head, 'title'),
-      createdAt: getMetaContent(head, 'createdAt'),
-      updatedAt: getMetaContent(head, 'updatedAt'),
     },
     content: ProseDOMParser.fromSchema(schema).parse(dom.body),
   };
 }
 
-export async function loadNotesTree () {
-  const files = await invoke("load_notes_dir", { dir: notesDir() });
-  console.log(files)
+type NoteMetaDto = NoteMeta & {is_directory: boolean};
+
+function buildNotesTree(noteMetas: NoteMetaDto[]): TTree<NoteMeta> {
+  if (noteMetas.length == 0) {
+    return [];
+  }
+
+  // TODO: Path is not a stable id if notes are moved.
+  const noteMetaPaths = noteMetas
+    .map(n => {return {...n, pathStr: n.path.join('/')}})
+    .sort((a, b) => a.pathStr.localeCompare(b.pathStr));
+
+  const tree: TTree<NoteMeta> = []
+
+  let level: {
+    [key: string]: any,
+    tree: TTree<NoteMeta>
+  } = {tree};
+
+  noteMetaPaths.forEach(note => {
+    note.path.reduce((r, name: string) => {
+      if (!r[name]) {
+        r[name] = {tree: []};
+
+        const node: TTreeNode<NoteMeta> = {id: note.pathStr, label: name};
+        if (note.is_directory) {
+          node.children = r[name].tree;
+        } else {
+          node.data = note;
+        }
+        
+        r.tree.push(node);
+      }
+      return r[name];
+    }, level)
+  })
+
+  return tree;
+}
+
+export async function loadNotesTree(): Promise<TTree<NoteMeta>> {
+  const files: NoteMetaDto[] = await invoke("load_notes_dir", { dir: notesDir() });
+  return buildNotesTree(files);
+}
+
+export async function loadNote(path: string[]): Promise<ParseResult> {
+  const absPath = await join(notesDir(), ...path)
+  const contents = await readTextFile(absPath);
+  return deserializeDocument(path, contents);
+}
+
+export async function saveNote(note: NoteMeta, content: Fragment): Promise<void> {
+  const absPath = await join(notesDir(), ...note.path)
+  const xml = serializeDocument(note, content);
+  await writeTextFile(absPath, xml);
 }

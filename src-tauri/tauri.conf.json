@@ -16,6 +16,13 @@
       "shell": {
         "all": false,
         "open": true
+      },
+      "fs": {
+        "all": true,
+        "scope": ["$TEMP/**/*"]
+      },
+      "path": {
+        "all": true
       }
     },
     "bundle": {

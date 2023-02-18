@@ -1,7 +1,7 @@
 import { createEffect, createSignal, on, onMount, Show, useContext } from "solid-js";
 
-import { NoteTreeContext } from "../../../state";
-import { getSelectedNode } from "../treeview/treeContext";
+import { NoteMeta, NoteTreeContext } from "../../../state";
+import { getSelectedNode, TTreeNode } from "../treeview/treeContext";
 import { EditorState, Plugin } from "prosemirror-state"
 import { EditorView } from "prosemirror-view"
 import { keymap } from "prosemirror-keymap"
@@ -19,19 +19,11 @@ import styles from './Editor.module.scss';
 import EditorToolbar from "./EditorToolbar";
 
 import debounce from 'lodash.debounce';
-import { deserializeDocument, serializeDocument } from "../../persistence";
+import { loadNote, saveNote } from "../../persistence";
 
 // TODO: Flush debounce when document is changing.
-const saveDebounce = debounce((view: EditorView) => {
-  let str = serializeDocument({
-    title: 'Foo',
-    createdAt: '1.2.3',
-    updatedAt: '2.3.4',
-  }, view.state.doc.content);
-
-  console.log(str)
-  let res = deserializeDocument(str)
-  console.log(res)
+const saveDebounce = debounce(async (note: NoteMeta, view: EditorView) => {
+  await saveNote(note, view.state.doc.content);
 }, 300)
 
 export default function Editor() {
@@ -46,11 +38,27 @@ export default function Editor() {
   const editorChangeBus = createEventBus<void>();
 
   const [title, setTitle] = createSignal<string | undefined>(undefined);
+  let node: TTreeNode<NoteMeta> | undefined;
+  // const [node, setNode] = createSignal<TTreeNode<NoteMeta> | undefined>();
 
-  createEffect(on(() => state.selectedNode, () => {
-    const node = getSelectedNode(state);
+  createEffect(on(() => state.selectedNode, async () => {
+    node = getSelectedNode<NoteMeta>(state);
+    if (!node) {
+      return;
+    }
+
     setTitle(node?.label);
-    editorView?.pasteText(node?.data?.body ?? 'Nothing')
+
+    const editorState = editorView!.state;
+    const res = await loadNote(node!.data!.path);
+    const newState = EditorState.create({
+      // TODO: Cache selection and undo/redo stacks.
+      schema: editorState.schema,
+      plugins: editorState.plugins,
+      doc: res.content, 
+    });
+
+    editorView!.updateState(newState);
   }))
 
   onMount(() => {
@@ -62,7 +70,7 @@ export default function Editor() {
             view(view) {
               return {
                 update: (view, prevState) => {
-                  saveDebounce(view);
+                  saveDebounce(node!.data!, view);
                   editorChangeBus.emit();
                 },
               };

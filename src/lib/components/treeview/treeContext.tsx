@@ -1,8 +1,7 @@
 import { FragmentProps } from "solid-headless/dist/types/utils/Fragment";
 import { Context as SolidContext, createContext } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createStore, produce } from "solid-js/store";
 
-// export type TreePath = string;
 export type TreeIndex = number[];
 
 export type TTreeNode<T> = {
@@ -48,12 +47,22 @@ export function getSelectedNode<T>(state: TreeState<T>): TTreeNode<T> | undefine
   return dfs(state.tree, state.selectedNode);
 }
 
+function getNodeAtIndex<T>(tree: TTree<T>, index: TreeIndex): TTreeNode<T> {
+  let node = tree[index[0]];
+  for (let i of index.slice(1)) {
+    node = node.children![i];
+  }
+  return node;
+}
+
 type TTreeContext<T> = [
   TreeState<T>,
   {
     select(id: string): void;
     expand(id: string): void;
-    update(index: TreeIndex, fn: (existing: T) => T): void;
+    updateTreeNode(index: TreeIndex, fn: (existing: T) => T): void;
+    replaceTree(tree: TTree<T>): void;
+    addNode(parentIndex: TreeIndex, node: TTreeNode<T>): void;
   }
 ];
 
@@ -92,8 +101,22 @@ export function TreeProvider<T>(props: TreeProviderProps<T>) {
       expand(id) {
         setState('expandedNodes', id, (expanded) => !expanded);
       },
-      update(index, fn) {
+      updateTreeNode(index, fn) {
         (setState as any)('tree', ...intersperse(index, 'children'), fn)
+      },
+      replaceTree(newTree) {
+        setState('tree', newTree);
+      },
+      addNode(parentIndex, node) {
+        setState(produce((s) => {
+          if (parentIndex.length == 0) {
+            s.tree.push(node);
+          } else {
+            const parent = getNodeAtIndex(s.tree, parentIndex);
+            parent.children ??= [];
+            parent.children.push(node);
+          }
+        }))
       },
     },
   ];
