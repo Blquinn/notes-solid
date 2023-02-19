@@ -39,9 +39,12 @@ export default function Editor() {
 
   const [title, setTitle] = createSignal<string | undefined>(undefined);
   let node: TTreeNode<NoteMeta> | undefined;
-  // const [node, setNode] = createSignal<TTreeNode<NoteMeta> | undefined>();
 
-  createEffect(on(() => state.selectedNode, async () => {
+  const loadSelectedNote = async () => {
+    if (!editorView) {
+      return;
+    }
+
     node = getSelectedNode<NoteMeta>(state);
     if (!node) {
       return;
@@ -59,9 +62,11 @@ export default function Editor() {
     });
 
     editorView!.updateState(newState);
-  }))
+  }
 
-  onMount(() => {
+  createEffect(on(() => state.selectedNode, loadSelectedNote))
+
+  onMount(async () => {
     editorView = new EditorView(editor!, {
       state: EditorState.create({
         doc: DOMParser.fromSchema(schema).parse(content!),
@@ -87,6 +92,7 @@ export default function Editor() {
     });
 
     setEditorViewMounted(true);
+    await loadSelectedNote();
   });
 
   const onTitleInput = (e: InputEvent) => {
