@@ -53,7 +53,7 @@ export default function Editor() {
     setTitle(node?.label);
 
     const editorState = editorView!.state;
-    const res = await loadNote(node!.data!.path);
+    const res = await loadNote(node!.data!);
     const newState = EditorState.create({
       // TODO: Cache selection and undo/redo stacks.
       schema: editorState.schema,

@@ -3,11 +3,11 @@ import { DOMParser as ProseDOMParser, DOMSerializer, Fragment, Node as ProseNode
 import { NoteMeta, notesDir } from "../state";
 import { schema } from "./components/editor/schema";
 import { TTree, TTreeNode } from "./components/treeview/treeContext";
-import { readTextFile, writeTextFile } from '@tauri-apps/api/fs';
-import { join } from '@tauri-apps/api/path';
+import { readTextFile, writeTextFile, createDir, exists } from '@tauri-apps/api/fs';
+import { appLocalDataDir, join } from '@tauri-apps/api/path';
 import { Result } from 'true-myth';
 
-export const serializeDocument = (meta: NoteMeta, content: Fragment) => {
+export const serializeDocument = (meta: NoteMeta, content?: Fragment) => {
   const d = document.createDocumentFragment();
 
   const html = document.createElement('html')
@@ -31,8 +31,10 @@ export const serializeDocument = (meta: NoteMeta, content: Fragment) => {
   const body = document.createElement('body');
   html.appendChild(body);
 
-  const contentDom = DOMSerializer.fromSchema(schema).serializeFragment(content);
-  body.appendChild(contentDom);
+  if (content) {
+    const contentDom = DOMSerializer.fromSchema(schema).serializeFragment(content);
+    body.appendChild(contentDom);
+  }
 
   return new XMLSerializer().serializeToString(d);
 }
@@ -110,14 +112,36 @@ export async function loadNotesTree(directory: string): Promise<Result<TTree<Not
   }
 }
 
-export async function loadNote(path: string[]): Promise<ParseResult> {
-  const absPath = await join(notesDir()!, ...path)
+export async function loadNote(note: NoteMeta): Promise<ParseResult> {
+  const absPath = await join(notesDir()!, ...note.path)
+  if (! await exists(absPath)) {
+    await saveNote(note);
+  }
+
   const contents = await readTextFile(absPath);
-  return deserializeDocument(path, contents);
+  return deserializeDocument(note.path, contents);
 }
 
-export async function saveNote(note: NoteMeta, content: Fragment): Promise<void> {
+export async function saveNote(note: NoteMeta, content?: Fragment): Promise<void> {
   const absPath = await join(notesDir()!, ...note.path)
   const xml = serializeDocument(note, content);
   await writeTextFile(absPath, xml);
+}
+
+const noteDirectoryKey = 'note_directory';
+
+export async function getNotesDataDir(): Promise<string> {
+  const noteDir = localStorage.getItem(noteDirectoryKey);
+  if (noteDir) {
+    return noteDir;
+  }
+
+  const dataDir = await appLocalDataDir();
+  const notesDir = await join(dataDir, 'notes');
+  await createDir(notesDir, {recursive: true});
+  return notesDir;
+}
+
+export function setNotesDataDir(dirPath: string) {
+  localStorage.setItem(noteDirectoryKey, dirPath);
 }

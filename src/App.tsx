@@ -9,8 +9,8 @@ import { Icon } from "solid-heroicons";
 import { TreeProvider } from "./lib/components/treeview/treeContext";
 import { LoadingError, notesLoadingState, NoteTreeContext, setNotesLoadingState, type DirectorySet } from "./state";
 import NotesPane from "./NotesPane";
-import { Match, Switch, useContext } from "solid-js";
-import { loadNotesTree } from "./lib/persistence";
+import { Match, onMount, Switch, useContext } from "solid-js";
+import { getNotesDataDir, loadNotesTree } from "./lib/persistence";
 import DirectoryButton from "./lib/components/DirectoryButton";
 
 function Shell() {
@@ -52,8 +52,10 @@ function Shell() {
     }
   }
 
-  // onMount(() => loadNotes('/tmp/foo'));
-  // TODO: Load notes directory from local storage.
+  onMount(async () => {
+    const noteDir = await getNotesDataDir();
+    await loadNotes(noteDir)
+  });
 
   const onDirectorySelected = (dir: string | null) => {
     if (dir == null) {
@@ -65,6 +67,7 @@ function Shell() {
 
   return (
     <Switch>
+      {/* TODO: This should just be a loading screen */}
       <Match when={notesLoadingState().state == 'not_set'}>
         <div class="h-full w-full flex justify-center items-center">
           <DirectoryButton buttonClass="variant-filled" name="set-notes-dir-button" onAccept={onDirectorySelected} />

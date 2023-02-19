@@ -19,7 +19,12 @@
       },
       "fs": {
         "all": true,
-        "scope": ["$TEMP/**/*"]
+        "scope": [
+          "$TEMP/**/*", 
+          "$APPDATA/**/*", 
+          "$APPLOCALDATA/**/*", 
+          "$HOME/**/*"
+        ]
       },
       "path": {
         "all": true
