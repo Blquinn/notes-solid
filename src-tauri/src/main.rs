@@ -3,9 +3,19 @@
     windows_subsystem = "windows"
 )]
 
-use std::{path::{Path, self}, ffi::OsStr};
+mod errors;
 
-use quick_xml::{events::Event, Reader};
+use std::{
+    ffi::OsStr,
+    path::{self, Path}, io::BufReader, fs::File,
+};
+
+use anyhow::anyhow;
+use errors::CommandResult;
+use quick_xml::{
+    events::{BytesStart, Event},
+    Reader,
+};
 use rayon::prelude::*;
 use regex::RegexBuilder;
 use serde::{Deserialize, Serialize};
@@ -33,21 +43,28 @@ pub struct NoteMeta {
 }
 
 #[tauri::command]
-fn load_notes_dir(dir: &str) -> Vec<NoteMeta> {
+fn load_notes_dir(dir: &str) -> CommandResult<Vec<NoteMeta>> {
+    println!("Loading notes from {}.", dir);
+
     let dir_path = Path::new(dir);
     let path_sep = OsStr::new(&path::MAIN_SEPARATOR.to_string()).to_owned();
 
-    return WalkDir::new(dir)
+    if !(dir_path.exists() || dir_path.is_dir()) {
+        println!("Directory {} doesn't exist, or isn't valid directory.", dir);
+        return Err(anyhow!("Provided path is not a valid directory.").into());
+    }
+
+    return Ok(WalkDir::new(dir)
         .into_iter()
         .filter_entry(|e| !is_hidden(e))
         .par_bridge()
         .into_par_iter()
         .flatten()
         .map(|e| {
-            let path = Path::new(e.path().to_str().unwrap());
+            let path = Path::new(e.path().to_str()?);
 
             if dir_path == path {
-                return None
+                return None;
             }
 
             let mut nm = NoteMeta::default();
@@ -62,7 +79,7 @@ fn load_notes_dir(dir: &str) -> Vec<NoteMeta> {
 
             if e.file_type().is_dir() {
                 nm.is_directory = true;
-                nm.title = path.file_name().unwrap().to_str().unwrap().to_owned();
+                nm.title = path.file_name()?.to_str()?.to_owned();
                 return Some(nm);
             }
 
@@ -75,6 +92,19 @@ fn load_notes_dir(dir: &str) -> Vec<NoteMeta> {
 
             let mut in_title = false;
 
+            let get_attr_val_by_name = |reader: &Reader<BufReader<File>>, e: &BytesStart, name: &[u8]| -> Option<String> {
+                e.attributes()
+                    .flatten()
+                    .find(|a| a.key.as_ref() == name)
+                    .map(|a| -> Option<String> {
+                        reader
+                            .decoder()
+                            .decode(a.value.as_ref())
+                            .ok()
+                            .map(|c| c.as_ref().to_owned())
+                    })?
+            };
+
             loop {
                 match reader.read_event_into(&mut buf) {
                     Ok(Event::Start(ref e)) => match e.name().as_ref() {
@@ -86,38 +116,13 @@ fn load_notes_dir(dir: &str) -> Vec<NoteMeta> {
                     Ok(Event::Empty(e)) => {
                         match e.name().as_ref() {
                             b"meta" => {
-                                let name = e
-                                    .attributes()
-                                    .flatten()
-                                    .find(|a| a.key.as_ref() == b"name")
-                                    .map(|a| {
-                                        reader
-                                            .decoder()
-                                            .decode(a.value.as_ref())
-                                            .unwrap()
-                                            .as_ref()
-                                            .to_owned()
-                                    })
-                                    .unwrap();
-
-                                let content = e
-                                    .attributes()
-                                    .flatten()
-                                    .find(|a| a.key.as_ref() == b"content")
-                                    .map(|a| {
-                                        reader
-                                            .decoder()
-                                            .decode(a.value.as_ref())
-                                            .unwrap()
-                                            .as_ref()
-                                            .to_owned()
-                                    })
-                                    .unwrap();
+                                let name = get_attr_val_by_name(&reader, &e, b"name")?;
+                                let content = get_attr_val_by_name(&reader, &e, b"content")?;
 
                                 match name.as_ref() {
                                     "id" => {
                                         nm.id = content;
-                                    },
+                                    }
                                     // "updatedAt" => {
                                     //     println!("Parsed updatedAt {}", content);
                                     // },
@@ -148,7 +153,7 @@ fn load_notes_dir(dir: &str) -> Vec<NoteMeta> {
             Some(nm)
         })
         .flatten()
-        .collect();
+        .collect());
 }
 
 #[tauri::command]

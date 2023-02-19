@@ -5,6 +5,7 @@ import { schema } from "./components/editor/schema";
 import { TTree, TTreeNode } from "./components/treeview/treeContext";
 import { readTextFile, writeTextFile } from '@tauri-apps/api/fs';
 import { join } from '@tauri-apps/api/path';
+import { Result } from 'true-myth';
 
 export const serializeDocument = (meta: NoteMeta, content: Fragment) => {
   const d = document.createDocumentFragment();
@@ -99,19 +100,24 @@ function buildNotesTree(noteMetas: NoteMetaDto[]): TTree<NoteMeta> {
   return tree;
 }
 
-export async function loadNotesTree(): Promise<TTree<NoteMeta>> {
-  const files: NoteMetaDto[] = await invoke("load_notes_dir", { dir: notesDir() });
-  return buildNotesTree(files);
+export async function loadNotesTree(directory: string): Promise<Result<TTree<NoteMeta>, string>> {
+  try {
+    const files: NoteMetaDto[] = await invoke("load_notes_dir", { dir: directory });
+    return Result.ok(buildNotesTree(files));
+  } catch (e) {
+    console.error('Failed to load notes tree.', e);
+    return Result.err('Failed to load notes.');
+  }
 }
 
 export async function loadNote(path: string[]): Promise<ParseResult> {
-  const absPath = await join(notesDir(), ...path)
+  const absPath = await join(notesDir()!, ...path)
   const contents = await readTextFile(absPath);
   return deserializeDocument(path, contents);
 }
 
 export async function saveNote(note: NoteMeta, content: Fragment): Promise<void> {
-  const absPath = await join(notesDir(), ...note.path)
+  const absPath = await join(notesDir()!, ...note.path)
   const xml = serializeDocument(note, content);
   await writeTextFile(absPath, xml);
 }

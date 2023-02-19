@@ -1,5 +1,4 @@
 import { createTreeContext, TTree } from "./lib/components/treeview/treeContext";
-import * as uuid from 'uuid';
 import { createSignal } from "solid-js";
 
 export interface NoteMeta {
@@ -57,10 +56,21 @@ const tree: TTree<NoteMeta> = [
 ];
 
 
-const [notesDir, setNotesDir] = createSignal('/tmp/notes-test-dir', { equals: false });
+export type DirectoryNotSet = {state: 'not_set'};
+export type DirectorySet = {state: 'set', notesDirectory: string};
+export type LoadingError = {state: 'error', error: string};
+export type NotesLoaded = {state: 'loaded', notesDirectory: string};
+
+export type NotesLoadingState = DirectoryNotSet | DirectorySet | LoadingError | NotesLoaded;
+
+export const [notesLoadingState, setNotesLoadingState] = createSignal<NotesLoadingState>({state: 'not_set'});
 
 export const NoteTreeContext = createTreeContext<NoteMeta>({ tree, expandedNodes: {} });
 
-export {
-  notesDir, setNotesDir
+export const notesDir = (): string | undefined => {
+  const loadingState = notesLoadingState();
+  if (loadingState.state == 'loaded' || loadingState.state == 'set') {
+    return loadingState.notesDirectory
+  }
+  return undefined;
 }
