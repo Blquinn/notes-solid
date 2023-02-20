@@ -77,6 +77,8 @@ fn load_notes_dir(dir: &str) -> CommandResult<Vec<NoteMeta>> {
                 .map(|os| os.to_str().unwrap().to_owned())
                 .collect();
 
+            nm.title = path.file_stem().unwrap().to_str().unwrap().to_owned();
+
             if e.file_type().is_dir() {
                 nm.is_directory = true;
                 nm.title = path.file_name()?.to_str()?.to_owned();
@@ -89,8 +91,6 @@ fn load_notes_dir(dir: &str) -> CommandResult<Vec<NoteMeta>> {
             };
 
             let mut buf = Vec::new();
-
-            let mut in_title = false;
 
             let get_attr_val_by_name = |reader: &Reader<BufReader<File>>, e: &BytesStart, name: &[u8]| -> Option<String> {
                 e.attributes()
@@ -107,12 +107,6 @@ fn load_notes_dir(dir: &str) -> CommandResult<Vec<NoteMeta>> {
 
             loop {
                 match reader.read_event_into(&mut buf) {
-                    Ok(Event::Start(ref e)) => match e.name().as_ref() {
-                        b"title" => {
-                            in_title = true;
-                        }
-                        _ => (),
-                    },
                     Ok(Event::Empty(e)) => {
                         match e.name().as_ref() {
                             b"meta" => {
@@ -123,30 +117,19 @@ fn load_notes_dir(dir: &str) -> CommandResult<Vec<NoteMeta>> {
                                     "id" => {
                                         nm.id = content;
                                     }
-                                    // "updatedAt" => {
-                                    //     println!("Parsed updatedAt {}", content);
-                                    // },
                                     _ => {}
                                 }
                             }
                             _ => (),
                         }
                     }
-                    Ok(Event::Text(e)) => {
-                        if in_title {
-                            nm.title = e.unescape().unwrap().as_ref().to_owned();
-                        }
-                    }
                     Ok(Event::End(ref e)) => match e.name().as_ref() {
-                        b"title" => {
-                            in_title = false;
-                        }
                         b"head" => break,
                         _ => (),
                     },
-                    Ok(Event::Eof) => break, // exits the loop when reaching end of file
+                    Ok(Event::Eof) => break,
                     Err(_) => return None,
-                    _ => (), // There are several other `Event`s we do not consider here
+                    _ => (),
                 }
             }
 
@@ -172,6 +155,12 @@ fn search_notes(dir: &str, phrase: &str) -> Vec<String> {
         .into_par_iter()
         .map(|e| {
             let path = e.unwrap().path().to_str().unwrap().to_owned();
+            let pp = Path::new(&path);
+            let title = pp.file_stem().unwrap().to_str().unwrap();
+
+            if re.is_match(title) {
+                return Some(path);
+            }
 
             let mut reader = match Reader::from_file(&path) {
                 Ok(reader) => reader,

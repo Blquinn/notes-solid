@@ -6,6 +6,7 @@ import { TTree, TTreeNode } from "./components/treeview/treeContext";
 import { readTextFile, writeTextFile, createDir, exists } from '@tauri-apps/api/fs';
 import { appLocalDataDir, join } from '@tauri-apps/api/path';
 import { Result } from 'true-myth';
+import * as p from 'path-browserify';
 
 export const serializeDocument = (meta: NoteMeta, content?: Fragment) => {
   const d = document.createDocumentFragment();
@@ -15,10 +16,6 @@ export const serializeDocument = (meta: NoteMeta, content?: Fragment) => {
 
   const head = document.createElement('head');
   html.appendChild(head);
-
-  const title = document.createElement('title');
-  head.appendChild(title);
-  title.text = meta.title;
 
   for (let [key, val] of Object.entries(meta)) {
     const meta = document.createElement('meta');
@@ -48,15 +45,21 @@ const getMetaContent = (head: HTMLHeadElement, name: string): string => {
   return (head.querySelector(`meta[name="${name}"]`) as HTMLMetaElement).content;
 }
 
+const fileName = (path: string[]): string => {
+  const fileEnd = path[path.length-1];
+  return p.basename(fileEnd, p.extname(fileEnd));
+}
+
 export const deserializeDocument = (path: string[], doc: string): ParseResult => {
   const dom = new DOMParser().parseFromString(doc, 'application/xhtml+xml');
   const head = dom.head;
+  const title = fileName(path);
 
   return {
     note: {
       path,
       id: getMetaContent(head, 'id'),
-      title: getMetaContent(head, 'title'),
+      title,
     },
     content: ProseDOMParser.fromSchema(schema).parse(dom.body),
   };
@@ -86,7 +89,7 @@ function buildNotesTree(noteMetas: NoteMetaDto[]): TTree<NoteMeta> {
       if (!r[name]) {
         r[name] = {tree: []};
 
-        const node: TTreeNode<NoteMeta> = {id: note.pathStr, label: name};
+        const node: TTreeNode<NoteMeta> = {id: note.pathStr, label: note.title};
         if (note.is_directory) {
           node.children = r[name].tree;
         } else {

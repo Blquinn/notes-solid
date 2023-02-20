@@ -45,6 +45,8 @@ export default function Editor() {
       return;
     }
 
+    saveDebounce.flush();
+
     node = getSelectedNode<NoteMeta>(state);
     if (!node) {
       return;
