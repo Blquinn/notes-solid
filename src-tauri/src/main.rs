@@ -6,11 +6,11 @@
 mod errors;
 
 use std::{
-    ffi::OsStr,
-    path::{self, Path}, io::BufReader, fs::File,
+    io::BufReader,
+    path::{Path, PathBuf}, fs::{File, read_dir},
 };
 
-use anyhow::anyhow;
+use anyhow::{anyhow, Context, Error};
 use errors::CommandResult;
 use quick_xml::{
     events::{BytesStart, Event},
@@ -21,14 +21,6 @@ use regex::RegexBuilder;
 use serde::{Deserialize, Serialize};
 use walkdir::{DirEntry, WalkDir};
 
-fn is_hidden(entry: &DirEntry) -> bool {
-    entry
-        .file_name()
-        .to_str()
-        .map(|s| s.starts_with("."))
-        .unwrap_or(false)
-}
-
 // TODO: Error handling
 // Dir not exist
 // Malformed xml
@@ -37,106 +29,159 @@ fn is_hidden(entry: &DirEntry) -> bool {
 #[derive(Serialize, Deserialize, Default)]
 pub struct NoteMeta {
     id: String,
-    path: Vec<String>,
+    path: String,
     title: String,
     is_directory: bool,
 }
 
-#[tauri::command]
-fn load_notes_dir(dir: &str) -> CommandResult<Vec<NoteMeta>> {
-    println!("Loading notes from {}.", dir);
+fn is_hidden(entry: &DirEntry) -> bool {
+    entry
+        .file_name()
+        .to_str()
+        .map(|s| s.starts_with("."))
+        .unwrap_or(false)
+}
 
+fn is_hidden_std(entry: &std::fs::DirEntry) -> bool {
+    entry
+        .file_name()
+        .to_str()
+        .map(|s| s.starts_with("."))
+        .unwrap_or(false)
+}
+
+fn load_note_meta(path: &PathBuf) -> anyhow::Result<NoteMeta> {
+    let mut nm = NoteMeta::default();
+
+    nm.path = path.to_str().context("path to str")?.to_owned();
+    nm.title = path.file_stem().unwrap().to_str().unwrap().to_owned();
+
+    let mut reader = match Reader::from_file(&path) {
+        Ok(reader) => reader,
+        Err(e) => return Err(e.into()),
+    };
+
+    let mut buf = Vec::new();
+
+    let get_attr_val_by_name =
+        |reader: &Reader<BufReader<File>>, e: &BytesStart, name: &[u8]| -> Option<String> {
+            e.attributes()
+                .flatten()
+                .find(|a| a.key.as_ref() == name)
+                .map(|a| -> Option<String> {
+                    reader
+                        .decoder()
+                        .decode(a.value.as_ref())
+                        .ok()
+                        .map(|c| c.as_ref().to_owned())
+                })?
+        };
+
+    loop {
+        match reader.read_event_into(&mut buf) {
+            Ok(Event::Empty(e)) => match e.name().as_ref() {
+                b"meta" => {
+                    let name = get_attr_val_by_name(&reader, &e, b"name")
+                        .context("Failed to get name attr")?;
+                    let content = get_attr_val_by_name(&reader, &e, b"content")
+                        .context("Failed to get content attr.")?;
+
+                    match name.as_ref() {
+                        "id" => {
+                            nm.id = content;
+                        }
+                        _ => {}
+                    }
+                }
+                _ => (),
+            },
+            Ok(Event::End(ref e)) => match e.name().as_ref() {
+                b"head" => break,
+                _ => (),
+            },
+            Ok(Event::Eof) => break,
+            Err(e) => return Err(e.into()),
+            _ => (),
+        }
+    }
+
+    Ok(nm)
+}
+
+/// Loads a list of paths.
+#[tauri::command]
+fn load_note_dirs(parent_dir: &str) -> CommandResult<Vec<String>> {
+    let dir_path = Path::new(parent_dir);
+
+    Ok(WalkDir::new(&dir_path)
+        .into_iter()
+        .map(|res| match res {
+            Ok(e) => {
+                if e.file_type().is_dir() && e.path() != dir_path {
+                    Some(e.path().to_str().unwrap().to_owned())
+                } else {
+                    None
+                }
+            }
+            Err(_) => None,
+        })
+        .flatten()
+        .collect())
+}
+
+// TODO: Rename these not something dumb.
+#[tauri::command]
+fn load_notes_dir(dir: &str, is_root: bool) -> CommandResult<Vec<NoteMeta>> {
     let dir_path = Path::new(dir);
-    let path_sep = OsStr::new(&path::MAIN_SEPARATOR.to_string()).to_owned();
+
+    println!("Loading notes from {:?}.", dir_path);
 
     if !(dir_path.exists() || dir_path.is_dir()) {
-        println!("Directory {} doesn't exist, or isn't valid directory.", dir);
+        println!(
+            "Directory {:?} doesn't exist, or isn't valid directory.",
+            dir_path
+        );
         return Err(anyhow!("Provided path is not a valid directory.").into());
     }
 
-    return Ok(WalkDir::new(dir)
-        .into_iter()
-        .filter_entry(|e| !is_hidden(e))
-        .par_bridge()
-        .into_par_iter()
-        .flatten()
-        .map(|e| {
-            let path = Path::new(e.path().to_str()?);
+    let dir_iter = read_dir(&dir_path).map_err(Error::msg)?;
 
-            if dir_path == path {
-                return None;
-            }
+    if is_root {
+        Ok(WalkDir::new(&dir_path)
+            .into_iter()
+            .flatten()
+            .filter(|e| !is_hidden(e))
+            .par_bridge()
+            .into_par_iter()
+            .map(|e| {
+                let path = e.path();
 
-            let mut nm = NoteMeta::default();
-
-            nm.path = Path::new(&path)
-                .strip_prefix(dir)
-                .unwrap()
-                .iter()
-                .filter(|p| *p != path_sep)
-                .map(|os| os.to_str().unwrap().to_owned())
-                .collect();
-
-            nm.title = path.file_stem().unwrap().to_str().unwrap().to_owned();
-
-            if e.file_type().is_dir() {
-                nm.is_directory = true;
-                nm.title = path.file_name()?.to_str()?.to_owned();
-                return Some(nm);
-            }
-
-            let mut reader = match Reader::from_file(&path) {
-                Ok(reader) => reader,
-                Err(_) => return None,
-            };
-
-            let mut buf = Vec::new();
-
-            let get_attr_val_by_name = |reader: &Reader<BufReader<File>>, e: &BytesStart, name: &[u8]| -> Option<String> {
-                e.attributes()
-                    .flatten()
-                    .find(|a| a.key.as_ref() == name)
-                    .map(|a| -> Option<String> {
-                        reader
-                            .decoder()
-                            .decode(a.value.as_ref())
-                            .ok()
-                            .map(|c| c.as_ref().to_owned())
-                    })?
-            };
-
-            loop {
-                match reader.read_event_into(&mut buf) {
-                    Ok(Event::Empty(e)) => {
-                        match e.name().as_ref() {
-                            b"meta" => {
-                                let name = get_attr_val_by_name(&reader, &e, b"name")?;
-                                let content = get_attr_val_by_name(&reader, &e, b"content")?;
-
-                                match name.as_ref() {
-                                    "id" => {
-                                        nm.id = content;
-                                    }
-                                    _ => {}
-                                }
-                            }
-                            _ => (),
-                        }
-                    }
-                    Ok(Event::End(ref e)) => match e.name().as_ref() {
-                        b"head" => break,
-                        _ => (),
-                    },
-                    Ok(Event::Eof) => break,
-                    Err(_) => return None,
-                    _ => (),
+                if dir_path == path {
+                    return None;
                 }
-            }
 
-            Some(nm)
-        })
-        .flatten()
-        .collect());
+                load_note_meta(&e.path().to_path_buf()).ok()
+            })
+            .flatten()
+            .collect())
+    } else {
+        Ok(dir_iter
+            .flatten()
+            .filter(|f| !(is_hidden_std(f) || f.file_type().unwrap().is_dir()))
+            .par_bridge()
+            .into_par_iter()
+            .map(|e| {
+                let path = e.path();
+
+                if dir_path == path {
+                    return None;
+                }
+
+                load_note_meta(&e.path().to_path_buf()).ok()
+            })
+            .flatten()
+            .collect())
+    }
 }
 
 #[tauri::command]
@@ -192,7 +237,11 @@ fn search_notes(dir: &str, phrase: &str) -> Vec<String> {
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![load_notes_dir, search_notes])
+        .invoke_handler(tauri::generate_handler![
+            load_note_dirs,
+            load_notes_dir,
+            search_notes,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

@@ -1,7 +1,6 @@
 import { createEffect, createSignal, on, onMount, Show, useContext } from "solid-js";
 
-import { NoteMeta, NoteTreeContext } from "../../../state";
-import { getSelectedNode, TTreeNode } from "../treeview/treeContext";
+import { NoteMeta } from "../../../state";
 import { EditorState, Plugin } from "prosemirror-state"
 import { EditorView } from "prosemirror-view"
 import { keymap } from "prosemirror-keymap"
@@ -20,6 +19,7 @@ import EditorToolbar from "./EditorToolbar";
 
 import debounce from 'lodash.debounce';
 import { loadNote, saveNote } from "../../persistence";
+import { findActiveNote, NotesListContext } from "../notelist/context";
 
 // TODO: Flush debounce when document is changing.
 const saveDebounce = debounce(async (note: NoteMeta, view: EditorView) => {
@@ -30,7 +30,7 @@ const editorPadding = 10; // px
 
 export default function Editor() {
 
-  const [state, _] = useContext(NoteTreeContext);
+  const [notesState, _] = useContext(NotesListContext);
 
   let titleEl: HTMLInputElement | undefined;
   let editor: HTMLDivElement | undefined;
@@ -40,24 +40,31 @@ export default function Editor() {
   const editorChangeBus = createEventBus<void>();
 
   const [title, setTitle] = createSignal<string | undefined>(undefined);
-  let node: TTreeNode<NoteMeta> | undefined;
 
   const loadSelectedNote = async () => {
     if (!editorView) {
       return;
     }
 
+    // TODO: If selected note is undefined clear everything.
+
     saveDebounce.flush();
 
-    node = getSelectedNode<NoteMeta>(state);
-    if (!node) {
+    const editorState = editorView!.state;
+
+    const note = findActiveNote(notesState);
+    if (!note) {
+      setTitle(undefined);
+      editorView!.updateState(EditorState.create({
+        schema: editorState.schema,
+        plugins: editorState.plugins,
+      }));
       return;
     }
 
-    setTitle(node?.label);
+    setTitle(note.title);
 
-    const editorState = editorView!.state;
-    const res = await loadNote(node!.data!);
+    const res = await loadNote(note);
     const newState = EditorState.create({
       // TODO: Cache selection and undo/redo stacks.
       schema: editorState.schema,
@@ -68,7 +75,7 @@ export default function Editor() {
     editorView!.updateState(newState);
   }
 
-  createEffect(on(() => state.selectedNode, loadSelectedNote))
+  createEffect(on(() => notesState.selectedNote, loadSelectedNote))
 
   onMount(async () => {
     editorView = new EditorView(editor!, {
@@ -81,7 +88,10 @@ export default function Editor() {
             view(view) {
               return {
                 update: (view, prevState) => {
-                  saveDebounce(node!.data!, view);
+                  const note = findActiveNote(notesState);
+                  if (note) {
+                    saveDebounce(note, view);
+                  }
                   editorChangeBus.emit();
                 },
               };

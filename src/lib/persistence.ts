@@ -1,10 +1,10 @@
 import { invoke } from "@tauri-apps/api";
 import { DOMParser as ProseDOMParser, DOMSerializer, Fragment, Node as ProseNode } from "prosemirror-model";
-import { NoteMeta, notesDir } from "../state";
+import { DirectoryMeta, NoteMeta, notesDir } from "../state";
 import { schema } from "./components/editor/schema";
 import { TTree, TTreeNode } from "./components/treeview/treeContext";
 import { readTextFile, writeTextFile, createDir, exists } from '@tauri-apps/api/fs';
-import { appLocalDataDir, join } from '@tauri-apps/api/path';
+import { appLocalDataDir, join, sep } from '@tauri-apps/api/path';
 import { Result } from 'true-myth';
 import * as p from 'path-browserify';
 
@@ -45,12 +45,11 @@ const getMetaContent = (head: HTMLHeadElement, name: string): string => {
   return (head.querySelector(`meta[name="${name}"]`) as HTMLMetaElement).content;
 }
 
-const fileName = (path: string[]): string => {
-  const fileEnd = path[path.length-1];
-  return p.basename(fileEnd, p.extname(fileEnd));
+const fileName = (path: string): string => {
+  return p.basename(path, p.extname(path));
 }
 
-export const deserializeDocument = (path: string[], doc: string): ParseResult => {
+export const deserializeDocument = (path: string, doc: string): ParseResult => {
   const dom = new DOMParser().parseFromString(doc, 'application/xhtml+xml');
   const head = dom.head;
   const title = fileName(path);
@@ -65,37 +64,34 @@ export const deserializeDocument = (path: string[], doc: string): ParseResult =>
   };
 }
 
-type NoteMetaDto = NoteMeta & {is_directory: boolean};
+export type NoteData = {
+  directories: TTree<DirectoryMeta>
+  notes: Map<string[], NoteMeta[]> // Map of directory paths to notes.
+}
 
-function buildNotesTree(noteMetas: NoteMetaDto[]): TTree<NoteMeta> {
-  if (noteMetas.length == 0) {
+function buildDirectoryTree(root: string, dirs: DirectoryMeta[]): TTree<DirectoryMeta> {
+  if (dirs.length == 0) {
     return [];
   }
 
-  // TODO: Path is not a stable id if notes are moved.
-  const noteMetaPaths = noteMetas
-    .map(n => {return {...n, pathStr: n.path.join('/')}})
-    .sort((a, b) => a.pathStr.localeCompare(b.pathStr));
-
-  const tree: TTree<NoteMeta> = []
+  const tree: TTree<DirectoryMeta> = []
 
   let level: {
     [key: string]: any,
-    tree: TTree<NoteMeta>
-  } = {tree};
+    tree: TTree<DirectoryMeta>
+  } = { tree };
 
-  noteMetaPaths.forEach(note => {
-    note.path.reduce((r, name: string) => {
+  dirs.forEach(dir => {
+    // THIS probably wont work on windows.
+    const relDir = p.relative(root, dir);
+
+    relDir.split(sep).reduce((r, name: string) => {
       if (!r[name]) {
-        r[name] = {tree: []};
+        r[name] = { tree: [] };
 
-        const node: TTreeNode<NoteMeta> = {id: note.pathStr, label: note.title};
-        if (note.is_directory) {
-          node.children = r[name].tree;
-        } else {
-          node.data = note;
-        }
-        
+        const node: TTreeNode<DirectoryMeta> = { id: relDir, label: fileName(relDir) };
+        node.children = r[name].tree;
+
         r.tree.push(node);
       }
       return r[name];
@@ -105,31 +101,43 @@ function buildNotesTree(noteMetas: NoteMetaDto[]): TTree<NoteMeta> {
   return tree;
 }
 
-export async function loadNotesTree(directory: string): Promise<Result<TTree<NoteMeta>, string>> {
+export async function loadDirectoryTree(rootDir: string): Promise<Result<TTree<DirectoryMeta>, string>> {
   try {
-    const files: NoteMetaDto[] = await invoke("load_notes_dir", { dir: directory });
-    return Result.ok(buildNotesTree(files));
+    const dirs: string[] = await invoke("load_note_dirs", { parentDir: rootDir });
+    return Result.ok(buildDirectoryTree(rootDir, dirs));
   } catch (e) {
     console.error('Failed to load notes tree.', e);
     return Result.err('Failed to load notes.');
   }
 }
 
+export async function loadDirectory(dir: string, isRoot: boolean): Promise<Result<NoteMeta[], string>> {
+  try {
+    const absDir = await join(notesDir()!, dir);
+    const notes: NoteMeta[] = await invoke("load_notes_dir", { dir: absDir, isRoot });
+    return Result.ok(notes);
+  } catch (e) {
+    const msg = `Error loading notes from ${dir}: ${e}`
+    console.error(msg);
+    return Result.err(msg);
+  }
+}
+
 export async function loadNote(note: NoteMeta): Promise<ParseResult> {
-  const absPath = await join(notesDir()!, ...note.path)
-  if (! await exists(absPath)) {
+  if (! await exists(note.path)) {
     await saveNote(note);
   }
 
-  const contents = await readTextFile(absPath);
+  const contents = await readTextFile(note.path);
   return deserializeDocument(note.path, contents);
 }
 
 export async function saveNote(note: NoteMeta, content?: Fragment): Promise<void> {
-  const absPath = await join(notesDir()!, ...note.path)
   const xml = serializeDocument(note, content);
-  await writeTextFile(absPath, xml);
+  await writeTextFile(note.path, xml);
 }
+
+// Local storage
 
 const noteDirectoryKey = 'note_directory';
 
@@ -141,7 +149,7 @@ export async function getNotesDataDir(): Promise<string> {
 
   const dataDir = await appLocalDataDir();
   const notesDir = await join(dataDir, 'notes');
-  await createDir(notesDir, {recursive: true});
+  await createDir(notesDir, { recursive: true });
   return notesDir;
 }
 

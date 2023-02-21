@@ -1,34 +1,30 @@
 import AppBar from "./lib/skeleton/components/AppBar";
 import AppShell from "./lib/skeleton/components/AppShell";
 
-import "./App.css";
 import Editor from "./lib/components/editor/Editor";
-import { cog, cog_6Tooth, pencilSquare } from "solid-heroicons/solid";
+import { cog_6Tooth, pencilSquare } from "solid-heroicons/solid";
 import { Icon } from "solid-heroicons";
 import { TreeProvider } from "./lib/components/treeview/treeContext";
-import { LoadingError, notesLoadingState, NoteTreeContext, setNotesLoadingState, type DirectorySet } from "./state";
+import { LoadingError, notesLoadingState, DirectoryTreeContext, setNotesLoadingState, type DirectorySet } from "./state";
 import NotesPane from "./NotesPane";
 import { createSignal, Match, onMount, Switch, useContext } from "solid-js";
-import { getNotesDataDir, loadNotesTree } from "./lib/persistence";
+import { getNotesDataDir, loadDirectoryTree } from "./lib/persistence";
 import DirectoryButton from "./lib/components/DirectoryButton";
-import IconButton from "./lib/skeleton/components/IconButton";
 import Modal from "./lib/skeleton/utlities/Modal/Modal";
 import LightSwitch from "./lib/skeleton/utlities/LightSwitch";
+import { NoteListContextProvider, NotesListContext } from "./lib/components/notelist/context";
 
 function Shell() {
-  const [state, store] = useContext(NoteTreeContext);
+  const [notesListState, _] = useContext(NotesListContext);
+  const [dirTreeState, dirTreeStore] = useContext(DirectoryTreeContext);
 
   const onNewNoteButtonClicked = () => {
-    store.addNode([], {
+    dirTreeStore.addNode([], {
       id: 'New Note.xhtml',
       label: 'New Note',
-      data: {
-        id: 'New Note',
-        title: 'New Note',
-        path: ['New Note.xhtml'],
-      }
+      data: 'New Note.xhtml',
     })
-    store.select('New Note.xhtml')
+    dirTreeStore.select('New Note.xhtml')
   }
 
   // TODO: Figure out tooltips
@@ -64,9 +60,9 @@ function Shell() {
   const loadNotes = async (directory: string) => {
     setNotesLoadingState({ state: 'set', notesDirectory: directory });
 
-    const result = await loadNotesTree(directory);
+    const result = await loadDirectoryTree(directory);
     if (result.isOk) {
-      store.replaceTree(result.value);
+      dirTreeStore.replaceTree(result.value);
       setNotesLoadingState({ state: 'loaded', notesDirectory: directory });
     } else {
       setNotesLoadingState({ state: 'error', error: result.error });
@@ -108,7 +104,7 @@ function Shell() {
           pageClasses="flex-1 flex flex-col min-h-0 bg-surface-100-900-token"
           childrenClasses="flex-1 flex flex-col min-h-0 bg-surface-100-900-token"
         >
-          {state.selectedNode ? (
+          {notesListState.selectedNote ? (
             <Editor />
           ) : (
             <div class="h-full w-full flex justify-center items-center">
@@ -122,11 +118,13 @@ function Shell() {
 }
 
 function App() {
-  const [state, _] = NoteTreeContext.defaultValue;
+  const [state, _] = DirectoryTreeContext.defaultValue;
 
   return (
-    <TreeProvider tree={state.tree} context={NoteTreeContext}>
-      <Shell />
+    <TreeProvider tree={state.tree} context={DirectoryTreeContext}>
+      <NoteListContextProvider>
+        <Shell />
+      </NoteListContextProvider>
     </TreeProvider>
   );
 }

@@ -1,4 +1,4 @@
-import { Accessor, For, JSX, on, Show, useContext } from 'solid-js';
+import { Accessor, For, JSX, Show, useContext } from 'solid-js';
 import { Context, TTree, TTreeNode } from './treeContext';
 import { Icon } from 'solid-heroicons';
 import { chevronRight } from 'solid-heroicons/solid';
@@ -31,37 +31,31 @@ export default function TreeView<T>(props: TreeViewProps<T>) {
     expand(node.id);
   }
 
-  const leafNode = (node: TTreeNode<T>) => (
-    <span
-      class={styles.inner}
-      onClick={() => onLeafSelected(node)}
-      classList={{ ['bg-primary-active-token']: node.id == state.selectedNode }}
-    >
-      <span class={styles.noArrow} />
-      <span class={styles.label}>{props.cellContent(node)}</span>
-    </span>
-  );
-
-  const branchNode = (node: TTreeNode<T>, idx: Accessor<number>) => (
-    <>
-      <span class={styles.inner} onClick={() => onBranchClicked(node)} >
-        <span class={styles.arrow}
-          classList={{ [styles.arrowDown]: showChildren(node) }}>
-          <Icon path={chevronRight}></Icon>
-        </span>
-        <span class={styles.label}>{props.cellContent(node)}</span>
-      </span>
-      <Show when={showChildren(node)}>
-        <TreeView {...props} tree={() => node.children!} index={[...index, idx()]} />
-      </Show>
-    </>
-  );
-
   return (
     <ul class={styles.treeView + ' ' + props.listClasses}>
       <For each={tree()}>{(node, i) =>
-        <li class={styles.pointer}>
-          {node.children ? branchNode(node, i) : leafNode(node)}
+        <li class="cursor-pointer">
+          <span class="p-2 gap-1 flex flex-1"
+            classList={{ ['bg-primary-active-token']: node.id == state.selectedNode }}
+          >
+            {(node.children && node.children.length > 0) ? (
+              <span class="w-4 h-4 self-center inline-block"
+                onClick={() => onBranchClicked(node)}
+                classList={{ ['rotate-90']: showChildren(node) }}>
+                <Icon path={chevronRight}></Icon>
+              </span>
+            ) : (
+              <span class="ml-4"></span>
+            )}
+
+            <span class="flex-1 no-wrap text-ellipsis overflow-hidden align-middle"
+              onClick={() => onLeafSelected(node)}
+              onDblClick={() => onBranchClicked(node)}
+            >{props.cellContent(node)}</span>
+          </span>
+          <Show when={showChildren(node)}>
+            <TreeView {...props} tree={() => node.children!} index={[...index, i()]} />
+          </Show>
         </li>
       }</For>
     </ul>

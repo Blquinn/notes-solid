@@ -1,3 +1,4 @@
+import { sep } from "@tauri-apps/api/path";
 import { FragmentProps } from "solid-headless/dist/types/utils/Fragment";
 import { Context as SolidContext, createContext } from "solid-js";
 import { createStore, produce } from "solid-js/store";
@@ -24,27 +25,44 @@ export interface TreeProviderProps<T> extends FragmentProps {
   tree: TTree<T>;
 }
 
-function dfs<T>(tree: TTree<T>, id: string): TTreeNode<T> | undefined {
+function dfs<T>(tree: TTree<T>, id: string, path: string[]): TTreeNode<T> | undefined {
   for (let node of tree) {
+    path.push(node.label);
     if (node.id == id) {
       return node;
     }
     if (node.children) {
-      const n = dfs(node.children, id)
+      const n = dfs(node.children, id, path)
       if (n) {
         return n;
       }
     }
+    path.pop();
   }
 
   return undefined;
 }
 
-export function getSelectedNode<T>(state: TreeState<T>): TTreeNode<T> | undefined {
+export type NodeSelection<T> = {
+  path: string
+  node: TTreeNode<T>
+}
+
+export function getSelectedNode<T>(state: TreeState<T>): NodeSelection<T> | undefined {
   if (!state.selectedNode) {
     return undefined;
   }
-  return dfs(state.tree, state.selectedNode);
+
+  const path: string[] = [];
+  const node = dfs(state.tree, state.selectedNode, path);
+  if (!node) {
+    return undefined;
+  }
+
+  return {
+    node,
+    path: path.join(sep),
+  }
 }
 
 function getNodeAtIndex<T>(tree: TTree<T>, index: TreeIndex): TTreeNode<T> {
@@ -58,7 +76,7 @@ function getNodeAtIndex<T>(tree: TTree<T>, index: TreeIndex): TTreeNode<T> {
 type TTreeContext<T> = [
   TreeState<T>,
   {
-    select(id: string): void;
+    select(id?: string): void;
     expand(id: string): void;
     updateTreeNode(index: TreeIndex, fn: (existing: T) => T): void;
     replaceTree(tree: TTree<T>): void;

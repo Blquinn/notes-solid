@@ -1,6 +1,6 @@
 import { FragmentProps } from "solid-headless/dist/types/utils/Fragment";
 import { open } from '@tauri-apps/api/dialog';
-import { appDir, homeDir } from "@tauri-apps/api/path";
+import { homeDir } from "@tauri-apps/api/path";
 
 export interface DirectoryButtonProps extends FragmentProps {
   class?: string
