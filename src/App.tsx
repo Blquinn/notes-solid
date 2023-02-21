@@ -3,15 +3,17 @@ import AppShell from "./lib/skeleton/components/AppShell";
 
 import "./App.css";
 import Editor from "./lib/components/editor/Editor";
-import LightSwitch from "./lib/skeleton/utlities/LightSwitch";
-import { pencilSquare } from "solid-heroicons/solid";
+import { cog, cog_6Tooth, pencilSquare } from "solid-heroicons/solid";
 import { Icon } from "solid-heroicons";
 import { TreeProvider } from "./lib/components/treeview/treeContext";
 import { LoadingError, notesLoadingState, NoteTreeContext, setNotesLoadingState, type DirectorySet } from "./state";
 import NotesPane from "./NotesPane";
-import { Match, onMount, Switch, useContext } from "solid-js";
+import { createSignal, Match, onMount, Switch, useContext } from "solid-js";
 import { getNotesDataDir, loadNotesTree } from "./lib/persistence";
 import DirectoryButton from "./lib/components/DirectoryButton";
+import IconButton from "./lib/skeleton/components/IconButton";
+import Modal from "./lib/skeleton/utlities/Modal/Modal";
+import LightSwitch from "./lib/skeleton/utlities/LightSwitch";
 
 function Shell() {
   const [state, store] = useContext(NoteTreeContext);
@@ -36,19 +38,38 @@ function Shell() {
     </button>
   );
 
+  const [settingsOpen, setSettingsOpen] = createSignal(false);
+
+  const settingsButton = (
+    <>
+      <Modal open={settingsOpen} onClose={() => { setSettingsOpen(false) }}>
+        <div class="p-4">
+          <h3>Settings Pannel</h3>
+          <div>
+            <span><b>Brightness </b></span>
+            <span><LightSwitch /></span>
+          </div>
+        </div>
+      </Modal>
+      <button onClick={() => setSettingsOpen(true)} class="h-6 w-6">
+        <Icon path={cog_6Tooth} />
+      </button>
+    </>
+  );
+
   const header = (
-    <AppBar padding="p-2" shadow="drop-shadow" lead={newNoteButton} trail={<LightSwitch />} />
+    <AppBar padding="p-2" shadow="drop-shadow" lead={newNoteButton} trail={settingsButton} />
   );
 
   const loadNotes = async (directory: string) => {
-    setNotesLoadingState({state: 'set', notesDirectory: directory});
+    setNotesLoadingState({ state: 'set', notesDirectory: directory });
 
     const result = await loadNotesTree(directory);
     if (result.isOk) {
       store.replaceTree(result.value);
-      setNotesLoadingState({state: 'loaded', notesDirectory: directory});
+      setNotesLoadingState({ state: 'loaded', notesDirectory: directory });
     } else {
-      setNotesLoadingState({state: 'error', error: result.error});
+      setNotesLoadingState({ state: 'error', error: result.error });
     }
   }
 
