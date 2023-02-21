@@ -26,6 +26,8 @@ const saveDebounce = debounce(async (note: NoteMeta, view: EditorView) => {
   await saveNote(note, view.state.doc.content);
 }, 300)
 
+const editorPadding = 10; // px
+
 export default function Editor() {
 
   const [state, _] = useContext(NoteTreeContext);
@@ -70,6 +72,8 @@ export default function Editor() {
 
   onMount(async () => {
     editorView = new EditorView(editor!, {
+      scrollThreshold: editorPadding ,
+      scrollMargin: editorPadding ,
       state: EditorState.create({
         doc: DOMParser.fromSchema(schema).parse(content!),
         plugins: [
@@ -140,6 +144,7 @@ export default function Editor() {
         onKeyDown={onEditorKey}
         ref={editor}
         class={`${styles.editor} flex-1 flex flex-col overflow-y-auto min-h-0 bg-surface-50-900-token`} 
+        style={`--editor-padding: ${editorPadding}px`}
       ></div>
       <div ref={content} class="hidden"></div>
       <Show when={editorViewMounted()}>
