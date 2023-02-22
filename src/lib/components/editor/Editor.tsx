@@ -153,7 +153,8 @@ export default function Editor() {
       <div 
         onKeyDown={onEditorKey}
         ref={editor}
-        class={`${styles.editor} flex-1 flex flex-col overflow-y-auto min-h-0 bg-surface-50-900-token`} 
+        class={`${styles.editor} flex-1 flex flex-col overflow-y-auto min-h-0 bg-surface-50-900-token hide-scrollbar`} 
+        data-simplebar
         style={`--editor-padding: ${editorPadding}px`}
       ></div>
       <div ref={content} class="hidden"></div>

@@ -11,7 +11,7 @@ export default function NotesPane() {
 
   return (
     <div class="side-bar h-full flex flex-row justify-stretch">
-      <div class="w-64 bg-surface-200-700-token overflow-y-auto hidey-scrollbar">
+      <div class="w-64 bg-surface-200-700-token overflow-y-auto hide-scrollbar" data-simplebar>
         <button
           class="w-full p-2 pl-7 text-left nav-list-item"
           classList={{

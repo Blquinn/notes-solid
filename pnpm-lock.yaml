@@ -28,6 +28,7 @@ specifiers:
   prosemirror-transform: ^1.7.0
   prosemirror-view: ^1.29.1
   sass: ^1.58.1
+  simplebar: ^6.2.1
   solid-headless: ^0.13.1
   solid-heroicons: ^3.1.1
   solid-js: ^1.4.7
@@ -71,6 +72,7 @@ devDependencies:
   prosemirror-transform: 1.7.1
   prosemirror-view: 1.30.1
   sass: 1.58.1
+  simplebar: 6.2.1
   solid-headless: 0.13.1_solid-js@1.6.10
   solid-heroicons: 3.1.1_solid-js@1.6.10
   solid-transition-group: 0.0.13_solid-js@1.6.10
@@ -943,6 +945,10 @@ packages:
     engines: {node: '>= 6'}
     dev: true
 
+  /can-use-dom/0.1.0:
+    resolution: {integrity: sha512-ceOhN1DL7Y4O6M0j9ICgmTYziV89WMd96SvSl0REd8PMgrY0B/WBOPoed5S1KUmJqXgUXh8gzSe6E3ae27upsQ==}
+    dev: true
+
   /caniuse-lite/1.0.30001451:
     resolution: {integrity: sha512-XY7UbUpGRatZzoRft//5xOa69/1iGJRBlrieH6QYrkKLIFn3m7OVEJ81dSrKoy2BnKsdbX5cLrOispZNYo9v2w==}
     dev: true
@@ -1284,6 +1290,10 @@ packages:
   /lilconfig/2.0.6:
     resolution: {integrity: sha512-9JROoBW7pobfsx+Sq2JsASvCo6Pfo6WWoUW79HuB1BCoBXD4PLWJPqDF6fNj67pqBYTbAHkE57M1kS/+L1neOg==}
     engines: {node: '>=10'}
+    dev: true
+
+  /lodash-es/4.17.21:
+    resolution: {integrity: sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw==}
     dev: true
 
   /lodash.clonedeep/4.5.0:
@@ -1630,6 +1640,20 @@ packages:
   /semver/6.3.0:
     resolution: {integrity: sha512-b39TBaTSfV6yBrapU89p5fKekE2m/NwnDocOVruQFS1/veMgdzuPcnOM34M6CwxW8jH/lxEa5rBoDeUwu5HHTw==}
     hasBin: true
+    dev: true
+
+  /simplebar-core/1.2.1:
+    resolution: {integrity: sha512-dgX6qDOSDM3+crxFstIKOlxyxnD3NYGRPm7CqmAtnNfFLVeadrydym5eNpduIO7aDFU/rayS6hEdrcxO0WBqnQ==}
+    dependencies:
+      can-use-dom: 0.1.0
+      lodash-es: 4.17.21
+    dev: true
+
+  /simplebar/6.2.1:
+    resolution: {integrity: sha512-zEurqs3D/010l8nxqj4EkorH5BQGfJb/T3mUvrVx1H6hT99daOVtkQo0p1NL1/ChoLrfzQzrBN9sD8saK456LQ==}
+    dependencies:
+      can-use-dom: 0.1.0
+      simplebar-core: 1.2.1
     dev: true
 
   /solid-headless/0.13.1_solid-js@1.6.10:
