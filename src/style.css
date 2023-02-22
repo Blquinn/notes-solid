@@ -7,3 +7,16 @@
 }
 
 html, body, #root { @apply h-full overflow-hidden; }
+
+.hidey-scrollbar::-webkit-scrollbar-thumb {
+  visibility: hidden;
+}
+.hidey-scrollbar:hover::-webkit-scrollbar-thumb {
+  visibility: visible;
+}
+.hidey-scrollbar::-webkit-scrollbar-track {
+  visibility: hidden;
+}
+.hidey-scrollbar:hover::-webkit-scrollbar-track {
+  visibility: visible;
+}
