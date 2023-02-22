@@ -26,13 +26,13 @@
 
 	/* === Scrollbars === */
 
-	::-webkit-scrollbar {
+	:not(.scrollbar-reset)::-webkit-scrollbar {
 		@apply w-2;
 	}
-	::-webkit-scrollbar-track {
+	:not(.scrollbar-reset)::-webkit-scrollbar-track {
 		@apply !bg-surface-50-900-token px-[1px];
 	}
-	::-webkit-scrollbar-thumb {
+	:not(.scrollbar-reset)::-webkit-scrollbar-thumb {
 		@apply rounded-token bg-surface-400-500-token;
 	}
 

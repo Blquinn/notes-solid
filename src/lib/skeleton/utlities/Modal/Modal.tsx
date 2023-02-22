@@ -62,7 +62,7 @@ export default function Modal(props: ModalProps) {
   return (
     <Show when={props.open()}>
       <div
-        class={`modal-backdrop fixed z-50 left-0 top-0 h-full w-full bg-surface-backdrop-token flex justify-center items-center ${props.classBackdrop ?? ''}`}
+        class={`modal-backdrop fixed left-0 top-0 h-full w-full bg-surface-backdrop-token flex justify-center items-center ${props.classBackdrop ?? ''}`}
         onMouseDown={onBackdropInteraction}
         onTouchStart={onBackdropInteraction}
         // transition:fade={{ duration }}
