@@ -13,7 +13,7 @@
 
     .ProseMirror {
       flex: 1;
-      position: relative;
+      // position: relative;
       border: none;
       outline: none;
       padding: var(--editor-padding);
@@ -40,7 +40,7 @@
     }
 
     .ProseMirror li {
-      position: relative;
+      // position: relative;
     }
 
     .ProseMirror * {
