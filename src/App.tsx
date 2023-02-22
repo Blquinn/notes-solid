@@ -14,9 +14,13 @@ import Modal from "./lib/skeleton/utlities/Modal/Modal";
 import NotesPane from "./NotesPane";
 import { DirectoryTreeContext, LoadingError, notesLoadingState, setNotesLoadingState, type DirectorySet } from "./state";
 
+import CollapseLeftSidebar from './assets/icons/collapse_left_sidebar.svg';
+import ExpandLeftSidebar from './assets/icons/expand_left_sidebar.svg';
+
 function Shell() {
   const [notesListState, _] = useContext(NotesListContext);
   const [_s, dirTreeStore] = useContext(DirectoryTreeContext);
+  const [showSidebar, setShowSidebar] = createSignal(true);
 
   const onNewNoteButtonClicked = () => {
     dirTreeStore.addNode([], {
@@ -34,6 +38,23 @@ function Shell() {
     </button>
   );
 
+  const toggleSideBarButton = (
+    <button onClick={() => setShowSidebar(!showSidebar())} class="h-6 w-6">
+      {showSidebar() ? (
+        <CollapseLeftSidebar />
+      ) : (
+        <ExpandLeftSidebar />
+      )}
+    </button>
+  );
+
+  const headerLead = (
+    <span class="flex flex-row gap-1">
+      {toggleSideBarButton}
+      {newNoteButton}
+    </span>
+  );
+
   const [settingsOpen, setSettingsOpen] = createSignal(false);
 
   const settingsButton = (
@@ -45,7 +66,7 @@ function Shell() {
   );
 
   const header = (
-    <AppBar padding="p-2" shadow="drop-shadow" lead={newNoteButton} trail={settingsButton} />
+    <AppBar padding="p-2" shadow="drop-shadow" lead={headerLead} trail={settingsButton} />
   );
 
   const loadNotes = async (directory: string) => {
@@ -88,6 +109,7 @@ function Shell() {
         <span>Got error when loading notes directory: {(notesLoadingState() as LoadingError).error}.</span>
       </Match>
       <Match when={notesLoadingState().state == 'loaded'}>
+
         <Modal open={settingsOpen} onClose={() => { setSettingsOpen(false) }}>
           <div class="p-4">
             <h3>Settings Pannel</h3>
@@ -97,8 +119,9 @@ function Shell() {
             </div>
           </div>
         </Modal>
+
         <AppShell
-          leftSideBarContent={<NotesPane />}
+          leftSideBarContent={<NotesPane showDirectoryTree={showSidebar} />}
           leftSideBarClasses="shadow"
           headerContent={header}
           pageClasses="flex-1 flex flex-col min-h-0 bg-surface-50-900-token"
@@ -112,6 +135,7 @@ function Shell() {
             </div>
           )}
         </AppShell>
+
       </Match>
     </Switch>
   );

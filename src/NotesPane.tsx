@@ -1,17 +1,28 @@
-import { useContext } from "solid-js";
+import { Accessor, useContext } from "solid-js";
 import NoteList from "./lib/components/notelist/NoteList";
 import { TTreeNode } from "./lib/components/treeview/treeContext";
 import TreeView from "./lib/components/treeview/TreeView";
 import { DirectoryTreeContext, DirectoryMeta } from "./state";
 
-export default function NotesPane() {
+export interface NotesPaneProps {
+  showDirectoryTree: Accessor<boolean>
+}
+
+export default function NotesPane(props: NotesPaneProps) {
   const treeCellContent = (node: TTreeNode<DirectoryMeta>) => node.label;
 
   const [dirTree, store] = useContext(DirectoryTreeContext);
 
   return (
     <div class="side-bar h-full flex flex-row justify-stretch">
-      <div class="w-64 bg-surface-200-700-token overflow-y-auto hide-scrollbar" data-simplebar>
+      <div 
+        class="w-64 bg-surface-200-700-token overflow-y-auto hide-scrollbar ease-in-out" 
+        style="transition: margin 150ms;"
+        classList={{
+          '-ml-64': !props.showDirectoryTree(),
+        }}
+        data-simplebar
+      >
         <button
           class="w-full p-2 pl-7 text-left nav-list-item"
           classList={{
