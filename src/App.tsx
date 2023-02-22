@@ -101,8 +101,8 @@ function Shell() {
           leftSideBarContent={<NotesPane />}
           leftSideBarClasses="shadow"
           headerContent={header}
-          pageClasses="flex-1 flex flex-col min-h-0 bg-surface-100-900-token"
-          childrenClasses="flex-1 flex flex-col min-h-0 bg-surface-100-900-token"
+          pageClasses="flex-1 flex flex-col min-h-0 bg-surface-50-900-token"
+          childrenClasses="flex-1 flex flex-col min-h-0 bg-surface-50-900-token"
         >
           {notesListState.selectedNote ? (
             <Editor />
