@@ -34,7 +34,7 @@ export default function NoteList() {
   }));
 
   return (
-    <div class="list-nav overflow-y-auto hidey-scrollbar">
+    <div class="list-nav overflow-y-auto hide-scrollbar" data-simplebar>
       <ul>
         <For each={notesState.notes}>{(note, i) =>
           <li
