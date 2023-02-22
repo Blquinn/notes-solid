@@ -1,22 +1,22 @@
 import AppBar from "./lib/skeleton/components/AppBar";
 import AppShell from "./lib/skeleton/components/AppShell";
 
-import Editor from "./lib/components/editor/Editor";
-import { cog_6Tooth, pencilSquare } from "solid-heroicons/solid";
 import { Icon } from "solid-heroicons";
-import { TreeProvider } from "./lib/components/treeview/treeContext";
-import { LoadingError, notesLoadingState, DirectoryTreeContext, setNotesLoadingState, type DirectorySet } from "./state";
-import NotesPane from "./NotesPane";
+import { cog_6Tooth, pencilSquare } from "solid-heroicons/solid";
 import { createSignal, Match, onMount, Switch, useContext } from "solid-js";
-import { getNotesDataDir, loadDirectoryTree } from "./lib/persistence";
 import DirectoryButton from "./lib/components/DirectoryButton";
-import Modal from "./lib/skeleton/utlities/Modal/Modal";
-import LightSwitch from "./lib/skeleton/utlities/LightSwitch";
+import Editor from "./lib/components/editor/Editor";
 import { NoteListContextProvider, NotesListContext } from "./lib/components/notelist/context";
+import { TreeProvider } from "./lib/components/treeview/treeContext";
+import { getNotesDataDir, loadDirectoryTree } from "./lib/persistence";
+import LightSwitch from "./lib/skeleton/utlities/LightSwitch";
+import Modal from "./lib/skeleton/utlities/Modal/Modal";
+import NotesPane from "./NotesPane";
+import { DirectoryTreeContext, LoadingError, notesLoadingState, setNotesLoadingState, type DirectorySet } from "./state";
 
 function Shell() {
   const [notesListState, _] = useContext(NotesListContext);
-  const [dirTreeState, dirTreeStore] = useContext(DirectoryTreeContext);
+  const [_s, dirTreeStore] = useContext(DirectoryTreeContext);
 
   const onNewNoteButtonClicked = () => {
     dirTreeStore.addNode([], {
