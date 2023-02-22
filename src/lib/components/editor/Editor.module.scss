@@ -11,9 +11,24 @@
 
   :global {
 
+    .simplebar-content {
+      height: 100%;
+    }
+
+    .simplebar-scrollbar::before {
+      // background-color: var(rbg(--color-primary-50));
+      background-color: white;
+    }
+
+    .dark .simplebar-scrollbar::before {
+      background-color: red;
+      // background-color: var(rbg(--color-primary-800));
+    }
+
     .ProseMirror {
-      flex: 1;
-      // position: relative;
+      // flex: 1;
+      height: 100%;
+      position: relative;
       border: none;
       outline: none;
       padding: var(--editor-padding);
@@ -40,7 +55,7 @@
     }
 
     .ProseMirror li {
-      // position: relative;
+      position: relative;
     }
 
     .ProseMirror * {

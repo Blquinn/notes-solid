@@ -38,15 +38,6 @@ function Shell() {
 
   const settingsButton = (
     <>
-      <Modal open={settingsOpen} onClose={() => { setSettingsOpen(false) }}>
-        <div class="p-4">
-          <h3>Settings Pannel</h3>
-          <div>
-            <span><b>Brightness </b></span>
-            <span><LightSwitch /></span>
-          </div>
-        </div>
-      </Modal>
       <button onClick={() => setSettingsOpen(true)} class="h-6 w-6">
         <Icon path={cog_6Tooth} />
       </button>
@@ -97,6 +88,15 @@ function Shell() {
         <span>Got error when loading notes directory: {(notesLoadingState() as LoadingError).error}.</span>
       </Match>
       <Match when={notesLoadingState().state == 'loaded'}>
+        <Modal open={settingsOpen} onClose={() => { setSettingsOpen(false) }}>
+          <div class="p-4">
+            <h3>Settings Pannel</h3>
+            <div>
+              <span><b>Brightness </b></span>
+              <span><LightSwitch /></span>
+            </div>
+          </div>
+        </Modal>
         <AppShell
           leftSideBarContent={<NotesPane />}
           leftSideBarClasses="shadow"
