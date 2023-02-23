@@ -33,6 +33,8 @@ pub struct NoteMeta {
     path: String,
     title: String,
     is_directory: bool,
+    created: String,
+    updated: String,
 }
 
 fn is_hidden(entry: &DirEntry) -> bool {
@@ -95,6 +97,12 @@ fn load_note_meta(dir_path: &PathBuf, path: &PathBuf) -> anyhow::Result<NoteMeta
                         "id" => {
                             nm.id = content;
                         }
+                        "created" => {
+                            nm.created = content;
+                        }
+                        "updated" => {
+                            nm.updated = content;
+                        }
                         _ => {}
                     }
                 }
@@ -152,8 +160,9 @@ fn load_notes_dir(dir: &str, is_root: bool) -> CommandResult<Vec<NoteMeta>> {
 
     let dir_iter = read_dir(&dir_path).map_err(Error::msg)?;
 
-    if is_root {
-        Ok(WalkDir::new(&dir_path)
+
+    let mut notes: Vec<NoteMeta> = if is_root {
+        WalkDir::new(&dir_path)
             .into_iter()
             .flatten()
             .filter(|e| !(is_hidden(e) || e.path().is_dir() || e.path() == dir_path))
@@ -163,9 +172,9 @@ fn load_notes_dir(dir: &str, is_root: bool) -> CommandResult<Vec<NoteMeta>> {
                 load_note_meta(&dir_path.to_path_buf(), &e.path().to_path_buf())
             })
             .flatten()
-            .collect())
+            .collect()
     } else {
-        Ok(dir_iter
+        dir_iter
             .flatten()
             .filter(|f| !(is_hidden_std(f) || f.file_type().unwrap().is_dir() || f.path() == dir_path))
             .par_bridge()
@@ -174,8 +183,11 @@ fn load_notes_dir(dir: &str, is_root: bool) -> CommandResult<Vec<NoteMeta>> {
                 load_note_meta(&dir_path.to_path_buf(), &e.path().to_path_buf())
             })
             .flatten()
-            .collect())
-    }
+            .collect()
+    };
+
+    notes.sort_by(|a, b| b.updated.partial_cmp(&a.updated).unwrap());
+    Ok(notes)
 }
 
 #[tauri::command]

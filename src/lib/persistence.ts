@@ -20,7 +20,11 @@ export const serializeDocument = (meta: NoteMeta, content?: Fragment) => {
   for (let [key, val] of Object.entries(meta)) {
     const meta = document.createElement('meta');
     meta.name = key;
-    meta.content = val;
+    if (val instanceof Date) {
+      meta.content = val.toISOString();
+    } else {
+      meta.content = val;
+    }
     head.appendChild(meta);
   }
 
@@ -41,8 +45,22 @@ export type ParseResult = {
   content: ProseNode,
 }
 
-const getMetaContent = (head: HTMLHeadElement, name: string): string => {
-  return (head.querySelector(`meta[name="${name}"]`) as HTMLMetaElement).content;
+const getMetaContent = (head: HTMLHeadElement, name: string): string | null => {
+  const el = head.querySelector(`meta[name="${name}"]`);
+  if (!el) {
+    return null;
+  }
+
+  return (el as HTMLMetaElement).content;
+}
+
+const getMetaDateOrNow = (head: HTMLHeadElement, name: string): Date => {
+  const cont = getMetaContent(head, name);
+  if (!cont) {
+    return new Date();
+  }
+
+  return new Date(cont);
 }
 
 const fileName = (path: string): string => {
@@ -62,8 +80,10 @@ export const deserializeDocument = (path: string, doc: string): ParseResult => {
   return {
     note: {
       path,
-      id: getMetaContent(head, 'id'),
+      id: getMetaContent(head, 'id') ?? '',
       title,
+      created: getMetaDateOrNow(head, 'created'),
+      updated: getMetaDateOrNow(head, 'updated'),
     },
     content: ProseDOMParser.fromSchema(schema).parse(dom.body),
   };
@@ -113,11 +133,29 @@ export async function loadDirectoryTree(rootDir: string): Promise<Result<TTree<D
   }
 }
 
+export interface NoteMetaDto {
+  id: string
+  title: string
+  path: string
+  created: string 
+  updated: string
+}
+
+function mapNoteDto(dto: NoteMetaDto): NoteMeta {
+  const defaultDate = (s: string) => s ? new Date(s) : new Date();
+
+  return {
+    ...dto,
+    created: defaultDate(dto.created),
+    updated: defaultDate(dto.updated)
+  }
+}
+
 export async function loadDirectory(dir: string, isRoot: boolean): Promise<Result<NoteMeta[], string>> {
   try {
     const absDir = await join(notesDir()!, dir);
-    const notes: NoteMeta[] = await invoke("load_notes_dir", { dir: absDir, isRoot });
-    return Result.ok(notes);
+    const notes: NoteMetaDto[] = await invoke("load_notes_dir", { dir: absDir, isRoot });
+    return Result.ok(notes.map(mapNoteDto));
   } catch (e) {
     const msg = `Error loading notes from ${dir}: ${e}`
     console.error(msg);

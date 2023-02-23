@@ -18,6 +18,7 @@ type NoteListContext = [
   {
     select(id?: string): void;
     setNotes(notes: NoteMeta[]): void;
+    updateNote(note: NoteMeta): void;
   }
 ];
 
@@ -40,6 +41,9 @@ export function NoteListContextProvider(props: FragmentProps) {
       },
       setNotes(notes) {
         setState('notes', notes);
+      },
+      updateNote(note) {
+        setState('notes', [note, ...state.notes.filter(n => n.id !== note.id)]);
       }
     },
   ];

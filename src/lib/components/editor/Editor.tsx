@@ -21,16 +21,18 @@ import debounce from 'lodash.debounce';
 import { loadNote, saveNote } from "../../persistence";
 import { findActiveNote, NotesListContext } from "../notelist/context";
 
-// TODO: Flush debounce when document is changing.
-const saveDebounce = debounce(async (note: NoteMeta, view: EditorView) => {
-  await saveNote(note, view.state.doc.content);
-}, 300)
 
 const editorPadding = 10; // px
 
 export default function Editor() {
 
-  const [notesState, _] = useContext(NotesListContext);
+  const [notesState, notesStore] = useContext(NotesListContext);
+
+  const saveDebounce = debounce(async (note: NoteMeta, view: EditorView) => {
+    const updatedNote: NoteMeta = {...note, updated: new Date()};
+    notesStore.updateNote(updatedNote);
+    await saveNote(updatedNote, view.state.doc.content);
+  }, 300)
 
   let titleEl: HTMLInputElement | undefined;
   let editor: HTMLDivElement | undefined;
@@ -88,11 +90,16 @@ export default function Editor() {
             view(view) {
               return {
                 update: (view, prevState) => {
+                  editorChangeBus.emit();
+
+                  if (view.state.doc.eq(prevState.doc)) {
+                    return;
+                  }
+
                   const note = findActiveNote(notesState);
                   if (note) {
                     saveDebounce(note, view);
                   }
-                  editorChangeBus.emit();
                 },
               };
             },
@@ -112,8 +119,10 @@ export default function Editor() {
   });
 
   const onTitleInput = (e: InputEvent) => {
+    // TODO: Save and update state.
   }
 
+  // TODO: Save and update state.
   const onTitleKey = (e: KeyboardEvent) => {
     if (e.key == 'Enter') {
       e.preventDefault();

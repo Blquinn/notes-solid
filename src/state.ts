@@ -8,6 +8,8 @@ export interface NoteMeta {
   id: string
   title: string
   path: string
+  created: Date
+  updated: Date
 }
 
 export interface Directory {

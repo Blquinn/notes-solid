@@ -8,28 +8,36 @@ import DirectoryButton from "./lib/components/DirectoryButton";
 import Editor from "./lib/components/editor/Editor";
 import { NoteListContextProvider, NotesListContext } from "./lib/components/notelist/context";
 import { TreeProvider } from "./lib/components/treeview/treeContext";
-import { getNotesDataDir, loadDirectoryTree } from "./lib/persistence";
+import { getNotesDataDir, loadDirectoryTree, saveNote } from "./lib/persistence";
 import LightSwitch from "./lib/skeleton/utlities/LightSwitch";
 import Modal from "./lib/skeleton/utlities/Modal/Modal";
 import NotesPane from "./NotesPane";
-import { DirectoryTreeContext, LoadingError, notesLoadingState, setNotesLoadingState, type DirectorySet } from "./state";
+import { DirectoryTreeContext, LoadingError, NoteMeta, notesLoadingState, setNotesLoadingState, type DirectorySet } from "./state";
+import { v1 } from 'uuid';
 
 import CollapseLeftSidebar from './assets/icons/collapse_left_sidebar.svg';
 import ExpandLeftSidebar from './assets/icons/expand_left_sidebar.svg';
 import { createStorageSignal } from "./lib/localStorage";
+import { join } from "@tauri-apps/api/path";
 
 function Shell() {
-  const [notesListState, _] = useContext(NotesListContext);
-  const [_s, dirTreeStore] = useContext(DirectoryTreeContext);
+  const [notesListState, notesListStore] = useContext(NotesListContext);
+  const [dirTreeState, dirTreeStore] = useContext(DirectoryTreeContext);
   const [showDirTree, setShowDirTree] = createStorageSignal('notes.layout.showDirTree', true);
 
-  const onNewNoteButtonClicked = () => {
-    dirTreeStore.addNode([], {
-      id: 'New Note.xhtml',
-      label: 'New Note',
-      data: 'New Note.xhtml',
-    })
-    dirTreeStore.select('New Note.xhtml')
+  const onNewNoteButtonClicked = async () => {
+    const id = v1();
+    const title = 'New Note';
+    const path = await join(dirTreeState.selectedNode ?? '', `${title}.xhtml`)
+    const note: NoteMeta = {
+      id,
+      path,
+      title,
+      created: new Date(),
+      updated: new Date(),
+    }
+    await saveNote(note);
+    notesListStore.updateNote(note);
   }
 
   // TODO: Figure out tooltips
