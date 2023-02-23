@@ -16,11 +16,12 @@ import { DirectoryTreeContext, LoadingError, notesLoadingState, setNotesLoadingS
 
 import CollapseLeftSidebar from './assets/icons/collapse_left_sidebar.svg';
 import ExpandLeftSidebar from './assets/icons/expand_left_sidebar.svg';
+import { createStorageSignal } from "./lib/localStorage";
 
 function Shell() {
   const [notesListState, _] = useContext(NotesListContext);
   const [_s, dirTreeStore] = useContext(DirectoryTreeContext);
-  const [showSidebar, setShowSidebar] = createSignal(true);
+  const [showDirTree, setShowDirTree] = createStorageSignal('notes.layout.showDirTree', true);
 
   const onNewNoteButtonClicked = () => {
     dirTreeStore.addNode([], {
@@ -39,8 +40,8 @@ function Shell() {
   );
 
   const toggleSideBarButton = (
-    <button onClick={() => setShowSidebar(!showSidebar())} class="h-6 w-6">
-      {showSidebar() ? (
+    <button onClick={() => setShowDirTree(!showDirTree())} class="h-6 w-6">
+      {showDirTree() ? (
         <CollapseLeftSidebar />
       ) : (
         <ExpandLeftSidebar />
@@ -109,7 +110,6 @@ function Shell() {
         <span>Got error when loading notes directory: {(notesLoadingState() as LoadingError).error}.</span>
       </Match>
       <Match when={notesLoadingState().state == 'loaded'}>
-
         <Modal open={settingsOpen} onClose={() => { setSettingsOpen(false) }}>
           <div class="p-4">
             <h3>Settings Pannel</h3>
@@ -121,7 +121,7 @@ function Shell() {
         </Modal>
 
         <AppShell
-          leftSideBarContent={<NotesPane showDirectoryTree={showSidebar} />}
+          leftSideBarContent={<NotesPane showDirectoryTree={showDirTree} />}
           leftSideBarClasses="shadow"
           headerContent={header}
           pageClasses="flex-1 flex flex-col min-h-0 bg-surface-50-900-token"
