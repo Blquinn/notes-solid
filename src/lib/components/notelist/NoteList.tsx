@@ -20,7 +20,7 @@ export default function NoteList() {
     }
 
     // TODO: Pass around actual 
-    const notes = await loadDirectory(path, !!!path);
+    const notes = await loadDirectory(path, !path);
     if (notes.isOk) {
       notesStore.setNotes(notes.value);
       if (notes.value.length == 0) {

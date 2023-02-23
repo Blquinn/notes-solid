@@ -49,6 +49,11 @@ const fileName = (path: string): string => {
   return p.basename(path, p.extname(path));
 }
 
+const dirName = (path: string): string => {
+  const chunks = path.split(sep);
+  return chunks[chunks.length-1];
+}
+
 export const deserializeDocument = (path: string, doc: string): ParseResult => {
   const dom = new DOMParser().parseFromString(doc, 'application/xhtml+xml');
   const head = dom.head;
@@ -69,7 +74,7 @@ export type NoteData = {
   notes: Map<string[], NoteMeta[]> // Map of directory paths to notes.
 }
 
-function buildDirectoryTree(root: string, dirs: DirectoryMeta[]): TTree<DirectoryMeta> {
+function buildDirectoryTree(dirs: DirectoryMeta[]): TTree<DirectoryMeta> {
   if (dirs.length == 0) {
     return [];
   }
@@ -82,14 +87,11 @@ function buildDirectoryTree(root: string, dirs: DirectoryMeta[]): TTree<Director
   } = { tree };
 
   dirs.forEach(dir => {
-    // THIS probably wont work on windows.
-    const relDir = p.relative(root, dir);
-
-    relDir.split(sep).reduce((r, name: string) => {
+    dir.split(sep).reduce((r, name: string) => {
       if (!r[name]) {
         r[name] = { tree: [] };
 
-        const node: TTreeNode<DirectoryMeta> = { id: relDir, label: fileName(relDir) };
+        const node: TTreeNode<DirectoryMeta> = { id: dir, label: dirName(dir) };
         node.children = r[name].tree;
 
         r.tree.push(node);
@@ -104,7 +106,7 @@ function buildDirectoryTree(root: string, dirs: DirectoryMeta[]): TTree<Director
 export async function loadDirectoryTree(rootDir: string): Promise<Result<TTree<DirectoryMeta>, string>> {
   try {
     const dirs: string[] = await invoke("load_note_dirs", { parentDir: rootDir });
-    return Result.ok(buildDirectoryTree(rootDir, dirs));
+    return Result.ok(buildDirectoryTree(dirs));
   } catch (e) {
     console.error('Failed to load notes tree.', e);
     return Result.err('Failed to load notes.');
@@ -124,17 +126,19 @@ export async function loadDirectory(dir: string, isRoot: boolean): Promise<Resul
 }
 
 export async function loadNote(note: NoteMeta): Promise<ParseResult> {
-  if (! await exists(note.path)) {
+  const path = await join(notesDir()!, note.path);
+  if (! await exists(path)) {
     await saveNote(note);
   }
 
-  const contents = await readTextFile(note.path);
+  const contents = await readTextFile(path);
   return deserializeDocument(note.path, contents);
 }
 
 export async function saveNote(note: NoteMeta, content?: Fragment): Promise<void> {
   const xml = serializeDocument(note, content);
-  await writeTextFile(note.path, xml);
+  const path = await join(notesDir()!, note.path);
+  await writeTextFile(path, xml);
 }
 
 // Local storage

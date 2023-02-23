@@ -6,8 +6,9 @@
 mod errors;
 
 use std::{
+    fs::{read_dir, File},
     io::BufReader,
-    path::{Path, PathBuf}, fs::{File, read_dir},
+    path::{Path, PathBuf},
 };
 
 use anyhow::{anyhow, Context, Error};
@@ -50,10 +51,14 @@ fn is_hidden_std(entry: &std::fs::DirEntry) -> bool {
         .unwrap_or(false)
 }
 
-fn load_note_meta(path: &PathBuf) -> anyhow::Result<NoteMeta> {
+fn load_note_meta(dir_path: &PathBuf, path: &PathBuf) -> anyhow::Result<NoteMeta> {
     let mut nm = NoteMeta::default();
 
-    nm.path = path.to_str().context("path to str")?.to_owned();
+    nm.path = path
+        .strip_prefix(dir_path)?
+        .to_str()
+        .context("path to str")?
+        .to_owned();
     nm.title = path.file_stem().unwrap().to_str().unwrap().to_owned();
 
     let mut reader = match Reader::from_file(&path) {
@@ -118,7 +123,8 @@ fn load_note_dirs(parent_dir: &str) -> CommandResult<Vec<String>> {
         .map(|res| match res {
             Ok(e) => {
                 if e.file_type().is_dir() && e.path() != dir_path {
-                    Some(e.path().to_str().unwrap().to_owned())
+                    let path = e.path().strip_prefix(dir_path).ok()?;
+                    Some(path.to_str().unwrap().to_owned())
                 } else {
                     None
                 }
@@ -134,7 +140,7 @@ fn load_note_dirs(parent_dir: &str) -> CommandResult<Vec<String>> {
 fn load_notes_dir(dir: &str, is_root: bool) -> CommandResult<Vec<NoteMeta>> {
     let dir_path = Path::new(dir);
 
-    println!("Loading notes from {:?}.", dir_path);
+    println!("Loading notes from {:?}, root={}.", dir_path, is_root);
 
     if !(dir_path.exists() || dir_path.is_dir()) {
         println!(
@@ -150,34 +156,22 @@ fn load_notes_dir(dir: &str, is_root: bool) -> CommandResult<Vec<NoteMeta>> {
         Ok(WalkDir::new(&dir_path)
             .into_iter()
             .flatten()
-            .filter(|e| !is_hidden(e))
+            .filter(|e| !(is_hidden(e) || e.path().is_dir() || e.path() == dir_path))
             .par_bridge()
             .into_par_iter()
             .map(|e| {
-                let path = e.path();
-
-                if dir_path == path {
-                    return None;
-                }
-
-                load_note_meta(&e.path().to_path_buf()).ok()
+                load_note_meta(&dir_path.to_path_buf(), &e.path().to_path_buf())
             })
             .flatten()
             .collect())
     } else {
         Ok(dir_iter
             .flatten()
-            .filter(|f| !(is_hidden_std(f) || f.file_type().unwrap().is_dir()))
+            .filter(|f| !(is_hidden_std(f) || f.file_type().unwrap().is_dir() || f.path() == dir_path))
             .par_bridge()
             .into_par_iter()
             .map(|e| {
-                let path = e.path();
-
-                if dir_path == path {
-                    return None;
-                }
-
-                load_note_meta(&e.path().to_path_buf()).ok()
+                load_note_meta(&dir_path.to_path_buf(), &e.path().to_path_buf())
             })
             .flatten()
             .collect())
