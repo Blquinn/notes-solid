@@ -14,6 +14,9 @@ export type TTreeNode<T> = {
 
 export type TTree<T> = TTreeNode<T>[];
 
+// Root represents the first 
+export const rootNode = '';
+
 export type TreeState<T> = {
   tree: TTree<T>;
   expandedNodes: { [key: string]: boolean }; // ID -> expanded

@@ -1,7 +1,7 @@
 import { createEffect, For, on, useContext } from "solid-js";
 import { DirectoryTreeContext } from "../../../state";
 import { loadDirectory } from "../../persistence";
-import { getSelectedNode } from "../treeview/treeContext";
+import { getSelectedNode, rootNode } from "../treeview/treeContext";
 import { NotesListContext } from "./context";
 
 export default function NoteList() {
@@ -9,7 +9,11 @@ export default function NoteList() {
   const [notesState, notesStore] = useContext(NotesListContext);
 
   createEffect(on(() => dirTree.selectedNode, async () => {
-    let path = '';
+    let path: string | undefined;
+
+    if (dirTree.selectedNode == rootNode) {
+      path = '';
+    }
 
     // 1. Load all the notes from the directory
     // 2. Order the notes by modification date.
@@ -20,7 +24,7 @@ export default function NoteList() {
     }
 
     // TODO: Pass around actual 
-    const notes = await loadDirectory(path, !path);
+    const notes = await loadDirectory(path ?? '', path === undefined);
     if (notes.isOk) {
       notesStore.setNotes(notes.value);
       if (notes.value.length == 0) {
@@ -38,7 +42,7 @@ export default function NoteList() {
       <ul>
         <For each={notesState.notes}>{(note, i) =>
           <li
-            class="list-item"
+            class="list-item !m-0"
             classList={{
               ['bg-primary-active-token']: note.path == notesState.selectedNote,
             }}

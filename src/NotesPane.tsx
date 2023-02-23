@@ -1,6 +1,6 @@
 import { Accessor, useContext } from "solid-js";
 import NoteList from "./lib/components/notelist/NoteList";
-import { TTreeNode } from "./lib/components/treeview/treeContext";
+import { rootNode, TTreeNode } from "./lib/components/treeview/treeContext";
 import TreeView from "./lib/components/treeview/TreeView";
 import { DirectoryTreeContext, DirectoryMeta } from "./state";
 
@@ -26,9 +26,16 @@ export default function NotesPane(props: NotesPaneProps) {
         <button
           class="w-full p-2 pl-7 text-left nav-list-item"
           classList={{
-            ['bg-primary-active-token']: !dirTree.selectedNode,
+            ['bg-primary-active-token']: dirTree.selectedNode === undefined,
           }}
           onClick={() => store.select(undefined)}>All Notes</button>
+
+        <button
+          class="w-full p-2 pl-7 text-left nav-list-item"
+          classList={{
+            ['bg-primary-active-token']: dirTree.selectedNode == rootNode,
+          }}
+          onClick={() => store.select(rootNode)}>Notes</button>
 
         <TreeView 
           listClasses="bg-surface-200-700-token" 
