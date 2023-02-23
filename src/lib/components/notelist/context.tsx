@@ -4,12 +4,13 @@ import { createStore } from "solid-js/store";
 import { NoteMeta } from "../../../state";
 
 type NotesListState = {
+  loading: boolean,
   notes: NoteMeta[];
   selectedNote?: string
 }
 
 export const NotesListContext = createContext<NoteListContext>([
-  { notes: [] },
+  { loading: false, notes: [] },
   {} as any,
 ]);
 
@@ -18,6 +19,7 @@ type NoteListContext = [
   {
     select(id?: string): void;
     setNotes(notes: NoteMeta[]): void;
+    setLoading(loading: boolean): void;
     updateNote(note: NoteMeta): void;
   }
 ];
@@ -28,6 +30,7 @@ export function findActiveNote(state: NotesListState): NoteMeta | undefined {
 
 export function NoteListContextProvider(props: FragmentProps) {
   const initialState: NotesListState = {
+    loading: false,
     notes: [],
   };
 
@@ -38,6 +41,9 @@ export function NoteListContextProvider(props: FragmentProps) {
     {
       select(id) {
         setState("selectedNote", id);
+      },
+      setLoading(loading) {
+        setState('loading', loading);
       },
       setNotes(notes) {
         setState('notes', notes);

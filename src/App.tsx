@@ -12,13 +12,14 @@ import { getNotesDataDir, loadDirectoryTree, saveNote } from "./lib/persistence"
 import LightSwitch from "./lib/skeleton/utlities/LightSwitch";
 import Modal from "./lib/skeleton/utlities/Modal/Modal";
 import NotesPane from "./NotesPane";
-import { DirectoryTreeContext, LoadingError, NoteMeta, notesLoadingState, setNotesLoadingState, type DirectorySet } from "./state";
+import { DirectoryTreeContext, LoadingError, NoteMeta, notesDirLoadingState, setNotesDirLoadingState, type DirectorySet } from "./state";
 import { v1 } from 'uuid';
 
 import CollapseLeftSidebar from './assets/icons/collapse_left_sidebar.svg';
 import ExpandLeftSidebar from './assets/icons/expand_left_sidebar.svg';
 import { createStorageSignal } from "./lib/localStorage";
 import { join } from "@tauri-apps/api/path";
+import LoadingSpinner from "./lib/components/LoadingSpinner";
 
 function Shell() {
   const [notesListState, notesListStore] = useContext(NotesListContext);
@@ -79,14 +80,14 @@ function Shell() {
   );
 
   const loadNotes = async (directory: string) => {
-    setNotesLoadingState({ state: 'set', notesDirectory: directory });
+    setNotesDirLoadingState({ state: 'loading', notesDirectory: directory });
 
     const result = await loadDirectoryTree(directory);
     if (result.isOk) {
       dirTreeStore.replaceTree(result.value);
-      setNotesLoadingState({ state: 'loaded', notesDirectory: directory });
+      setNotesDirLoadingState({ state: 'loaded', notesDirectory: directory });
     } else {
-      setNotesLoadingState({ state: 'error', error: result.error });
+      setNotesDirLoadingState({ state: 'error', notesDirectory: directory, error: result.error });
     }
   }
 
@@ -106,18 +107,15 @@ function Shell() {
   return (
     <Switch>
       {/* TODO: This should just be a loading screen */}
-      <Match when={notesLoadingState().state == 'not_set'}>
-        <div class="h-full w-full flex justify-center items-center">
-          <DirectoryButton buttonClass="variant-filled" name="set-notes-dir-button" onAccept={onDirectorySelected} />
+      <Match when={notesDirLoadingState().state == 'loading'}>
+        <div class="flex w-full h-full justify-center align-center">
+          <LoadingSpinner />
         </div>
       </Match>
-      <Match when={notesLoadingState().state == 'set'}>
-        <span>Loading notes from {(notesLoadingState() as DirectorySet).notesDirectory}.</span>
+      <Match when={notesDirLoadingState().state == 'error'}>
+        <span>Got error when loading notes directory: {(notesDirLoadingState() as LoadingError).error}.</span>
       </Match>
-      <Match when={notesLoadingState().state == 'error'}>
-        <span>Got error when loading notes directory: {(notesLoadingState() as LoadingError).error}.</span>
-      </Match>
-      <Match when={notesLoadingState().state == 'loaded'}>
+      <Match when={notesDirLoadingState().state == 'loaded'}>
         <Modal open={settingsOpen} onClose={() => { setSettingsOpen(false) }}>
           <div class="p-4">
             <h3>Settings Pannel</h3>
@@ -125,11 +123,19 @@ function Shell() {
               <span><b>Brightness </b></span>
               <span><LightSwitch /></span>
             </div>
+            <div>
+              <b>Notes directory:</b>
+              <div class="h-full w-full flex justify-center items-center">
+                <DirectoryButton buttonClass="variant-filled" name="set-notes-dir-button" onAccept={onDirectorySelected} />
+              </div>
+            </div>
           </div>
         </Modal>
 
         <AppShell
-          leftSideBarContent={<NotesPane showDirectoryTree={showDirTree} />}
+          leftSideBarContent={
+            <NotesPane showDirectoryTree={showDirTree} />
+          }
           leftSideBarClasses="shadow"
           headerContent={header}
           pageClasses="flex-1 flex flex-col min-h-0 bg-surface-50-900-token"

@@ -16,20 +16,25 @@ export interface Directory {
   name: string
 }
 
-export type DirectoryNotSet = {state: 'not_set'};
-export type DirectorySet = {state: 'set', notesDirectory: string};
-export type LoadingError = {state: 'error', error: string};
-export type NotesLoaded = {state: 'loaded', notesDirectory: string};
+type BaseState = {
+  notesDirectory: string,
+}
+export type DirectorySet = BaseState & {state: 'loading'};
+export type LoadingError = BaseState & {state: 'error', error: string};
+export type NotesLoaded = BaseState & {state: 'loaded'};
 
-export type NotesLoadingState = DirectoryNotSet | DirectorySet | LoadingError | NotesLoaded;
+export type NotesLoadingState = DirectorySet | LoadingError | NotesLoaded;
 
-export const [notesLoadingState, setNotesLoadingState] = createSignal<NotesLoadingState>({state: 'not_set'});
+export const [notesDirLoadingState, setNotesDirLoadingState] = createSignal<NotesLoadingState>({
+  state: 'loading',
+  notesDirectory: '',
+});
 
 export const DirectoryTreeContext = createTreeContext<DirectoryMeta>({ tree: [], expandedNodes: {} });
 
 export const notesDir = (): string | undefined => {
-  const loadingState = notesLoadingState();
-  if (loadingState.state == 'loaded' || loadingState.state == 'set') {
+  const loadingState = notesDirLoadingState();
+  if (loadingState.state == 'loaded' || loadingState.state == 'loading') {
     return loadingState.notesDirectory
   }
   return undefined;
