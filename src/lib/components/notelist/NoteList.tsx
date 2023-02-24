@@ -1,3 +1,5 @@
+import { Icon } from "solid-heroicons";
+import { folder } from "solid-heroicons/solid";
 import { createEffect, For, on, Show, useContext } from "solid-js";
 import { DirectoryTreeContext } from "../../../state";
 import { loadDirectory } from "../../persistence";
@@ -70,7 +72,26 @@ export default function NoteList() {
                 ['bg-primary-active-token']: note.path == notesState.selectedNote,
               }}
             >
-              <a href="#" onClick={() => notesStore.select(note.path)}>{note.title}</a>
+              <a href="#" 
+                class="block flex flex-col !items-start"
+                onClick={() => notesStore.select(note.path)}
+              >
+                <div>{note.title}</div>
+
+                {/* Show directory when the note is in a notebook. */}
+                <Show when={dirTree.selectedNode === undefined && note.dirPath}>
+                  <div class="!ml-0"
+                    classList={{
+                      ['text-surface-500-400-token']: note.path !== notesState.selectedNote,
+                    }}
+                  >
+                    <span class="flex flex-row items-center gap-1">
+                      <Icon path={folder} class="h-4 w-4" />
+                      <sub class="flex-1">{note.dirPath}</sub>
+                    </span>
+                  </div>
+                </Show>
+              </a>
             </li>
           }</For>
         </ul>

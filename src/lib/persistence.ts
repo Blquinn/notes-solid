@@ -72,6 +72,12 @@ const dirName = (path: string): string => {
   return chunks[chunks.length-1];
 }
 
+// TODO: Make sure all these work cross platform.
+const dirPath = (path: string, title: string): string => {
+  const idx = path.lastIndexOf(title);
+  return path.substring(0, idx-1)
+}
+
 export const deserializeDocument = (path: string, doc: string): ParseResult => {
   const dom = new DOMParser().parseFromString(doc, 'application/xhtml+xml');
   const head = dom.head;
@@ -80,6 +86,7 @@ export const deserializeDocument = (path: string, doc: string): ParseResult => {
   return {
     note: {
       path,
+      dirPath: dirPath(path, title),
       id: getMetaContent(head, 'id') ?? '',
       title,
       created: getMetaDateOrNow(head, 'created'),
@@ -146,6 +153,7 @@ function mapNoteDto(dto: NoteMetaDto): NoteMeta {
 
   return {
     ...dto,
+    dirPath: dirPath(dto.path, dto.title),
     created: defaultDate(dto.created),
     updated: defaultDate(dto.updated)
   }

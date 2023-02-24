@@ -8,6 +8,7 @@ export interface NoteMeta {
   id: string
   title: string
   path: string
+  dirPath: string
   created: Date
   updated: Date
 }
@@ -16,9 +17,7 @@ export interface Directory {
   name: string
 }
 
-type BaseState = {
-  notesDirectory: string,
-}
+type BaseState = { notesDirectory: string }
 export type DirectorySet = BaseState & {state: 'loading'};
 export type LoadingError = BaseState & {state: 'error', error: string};
 export type NotesLoaded = BaseState & {state: 'loaded'};

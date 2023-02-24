@@ -33,6 +33,7 @@ function Shell() {
     const note: NoteMeta = {
       id,
       path,
+      dirPath: '',
       title,
       created: new Date(),
       updated: new Date(),
