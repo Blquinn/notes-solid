@@ -61,8 +61,9 @@ export function buildKeymap(schema: Schema) {
 
     bind("Mod-`", toggleMark(schema.marks.code));
 
-    bind("Shift-Ctrl-8", wrapInList(schema.nodes.bullet_list));
-    bind("Shift-Ctrl-9", wrapInList(schema.nodes.ordered_list));
+    bind("Shift-Ctrl-7", wrapInList(schema.nodes.bullet_list));
+    bind("Shift-Ctrl-8", wrapInList(schema.nodes.ordered_list));
+    bind("Shift-Ctrl-9", wrapInList(schema.nodes.task_list));
     bind("Ctrl->", wrapIn(schema.nodes.blockquote));
 
     let cmd = chainCommands(exitCode, (state, dispatch) => {
@@ -74,15 +75,15 @@ export function buildKeymap(schema: Schema) {
     bind("Shift-Enter", cmd);
     if (mac) bind("Ctrl-Enter", cmd);
 
-    bind("Enter", splitListItem(schema.nodes.list_item));
-    bind("Enter", splitListItem(schema.nodes.task_list_item));
-    bind("Mod-[", liftListItem(schema.nodes.list_item));
-    bind("Mod-]", sinkListItem(schema.nodes.list_item));
-    bind("Mod-[", liftListItem(schema.nodes.task_list_item));
-    bind("Mod-]", sinkListItem(schema.nodes.task_list_item));
+    bind("Enter", splitListItem(schema.nodes.list_item, schema.nodes.task_list_item));
+    bind("Mod-[", liftListItem(schema.nodes.list_item, schema.nodes.task_list_item));
+    bind("Mod-]", sinkListItem(schema.nodes.list_item, schema.nodes.task_list_item));
 
     bind("Shift-Ctrl-0", setBlockType(schema.nodes.paragraph));
     bind("Shift-Ctrl-\\", setBlockType(schema.nodes.code_block));
+    for (let i = 1; i <= 6; i++) {
+      bind(`Shift-Ctrl-${i}`, setBlockType(schema.nodes.heading, {level: i}));
+    }
 
     for (let i = 1; i <= 6; i++) bind("Shift-Ctrl-" + i, setBlockType(schema.nodes.heading, { level: i }));
 

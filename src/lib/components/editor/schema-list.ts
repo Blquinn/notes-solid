@@ -51,7 +51,7 @@ export const taskList: NodeSpec = {
   toDOM() { return taskListDOM }
 }
 
-/// A list item (`<li>`) spec.
+/// A task list item (`<li class="task-list-item">`) spec.
 export const taskListItem: NodeSpec = {
   // Do we need the input here?
   parseDOM: [{
@@ -152,17 +152,17 @@ function doWrapInList(tr: Transaction, range: NodeRange, wrappers: {type: NodeTy
 // TODO: Something fucky here
 /// Build a command that splits a non-empty textblock at the top level
 /// of a list item by also splitting that list item.
-export function splitListItem(itemType: NodeType): Command {
+export function splitListItem(...itemTypes: NodeType[]): Command {
   return function(state: EditorState, dispatch?: (tr: Transaction) => void) {
     let {$from, $to, node} = state.selection as NodeSelection
     if ((node && node.isBlock) || $from.depth < 2 || !$from.sameParent($to)) return false
     let grandParent = $from.node(-1)
-    if (grandParent.type != itemType) return false
+    if (!itemTypes.includes(grandParent.type)) return false
     if ($from.parent.content.size == 0 && $from.node(-1).childCount == $from.indexAfter(-1)) {
       // In an empty block. If this is a nested list, the wrapping
       // list item should be split. Otherwise, bail out and let next
       // command handle lifting.
-      if ($from.depth == 3 || $from.node(-3).type != itemType ||
+      if ($from.depth == 3 || !itemTypes.includes($from.node(-3).type) ||
           $from.index(-2) != $from.node(-2).childCount - 1) return false
       if (dispatch) {
         let wrap = Fragment.empty
@@ -174,7 +174,7 @@ export function splitListItem(itemType: NodeType): Command {
         let depthAfter = $from.indexAfter(-1) < $from.node(-2).childCount ? 1
             : $from.indexAfter(-2) < $from.node(-3).childCount ? 2 : 3
         // Add a second list item with an empty default start node
-        wrap = wrap.append(Fragment.from(itemType.createAndFill()))
+        wrap = wrap.append(Fragment.from(grandParent.type.createAndFill()))
         let start = $from.before($from.depth - (depthBefore - 1))
         let tr = state.tr.replace(start, $from.after(-depthAfter), new Slice(wrap, 4 - depthBefore, 0))
         let sel = -1
@@ -198,14 +198,15 @@ export function splitListItem(itemType: NodeType): Command {
 
 /// Create a command to lift the list item around the selection up into
 /// a wrapping list.
-export function liftListItem(itemType: NodeType): Command {
+export function liftListItem(...itemTypes: NodeType[]): Command {
   return function(state: EditorState, dispatch?: (tr: Transaction) => void) {
     let {$from, $to} = state.selection
-    let range = $from.blockRange($to, node => node.childCount > 0 && node.firstChild!.type == itemType)
+    let range = $from.blockRange($to, node => node.childCount > 0 && itemTypes.includes(node.firstChild!.type))
     if (!range) return false
     if (!dispatch) return true
-    if ($from.node(range.depth - 1).type == itemType) // Inside a parent list
-      return liftToOuterList(state, dispatch, itemType, range)
+    const nodeType = $from.node(range.depth - 1).type;
+    if (itemTypes.includes(nodeType)) // Inside a parent list
+      return liftToOuterList(state, dispatch, nodeType, range)
     else // Outer list node
       return liftOutOfList(state, dispatch, range)
   }
@@ -257,18 +258,19 @@ function liftOutOfList(state: EditorState, dispatch: (tr: Transaction) => void, 
 
 /// Create a command to sink the list item around the selection down
 /// into an inner list.
-export function sinkListItem(itemType: NodeType): Command {
+export function sinkListItem(...itemTypes: NodeType[]): Command {
   return function(state, dispatch) {
     let {$from, $to} = state.selection
-    let range = $from.blockRange($to, node => node.childCount > 0 && node.firstChild!.type == itemType)
+    let range = $from.blockRange($to, node => node.childCount > 0 && itemTypes.includes(node.firstChild!.type))
     if (!range) return false
     let startIndex = range.startIndex
     if (startIndex == 0) return false
     let parent = range.parent, nodeBefore = parent.child(startIndex - 1)
-    if (nodeBefore.type != itemType) return false
+    if (!itemTypes.includes(nodeBefore.type)) return false
 
     if (dispatch) {
       let nestedBefore = nodeBefore.lastChild && nodeBefore.lastChild.type == parent.type
+      const itemType = nodeBefore.type;
       let inner = Fragment.from(nestedBefore ? itemType.create() : null)
       let slice = new Slice(Fragment.from(itemType.create(null, Fragment.from(parent.type.create(null, inner)))),
                             nestedBefore ? 3 : 1, 0)
