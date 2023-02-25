@@ -3,9 +3,20 @@ import {Slice, Fragment, NodeSpec, DOMOutputSpec, NodeType, Attrs, NodeRange} fr
 import OrderedMap from "orderedmap"
 import {Command, EditorState, Transaction, NodeSelection, Selection} from "prosemirror-state"
 
+
 const olDOM: DOMOutputSpec = ["ol", 0]
 const ulDOM: DOMOutputSpec = ["ul", 0]
 const liDOM: DOMOutputSpec = ["li", 0]
+
+
+const taskListClass = 'task-list';
+const taskListItemClass = 'task-list-item';
+
+const taskListDOM: DOMOutputSpec = ["ul", {class: taskListClass}, 0]
+// TODO: This needs to take whether the checkbox is checked or not...
+// I guess it should be a function?
+const taskListItemDOM = (checked: boolean): DOMOutputSpec =>
+  ["li", {class: taskListItemClass, 'data-checked': checked}, 0];
 
 /// An ordered list [node spec](#model.NodeSpec). Has a single
 /// attribute, `order`, which determines the number at which the list
@@ -34,6 +45,29 @@ export const listItem: NodeSpec = {
   defining: true
 }
 
+/// A task list node spec, represented in the DOM as `<ul>` with a task list class.
+export const taskList: NodeSpec = {
+  parseDOM: [{tag: `ul.${taskListClass}`, priority: 51}],
+  toDOM() { return taskListDOM }
+}
+
+/// A list item (`<li>`) spec.
+export const taskListItem: NodeSpec = {
+  // Do we need the input here?
+  parseDOM: [{
+    tag: `li.${taskListItemClass}`,
+    getAttrs(node) {
+      return { checked: (node as HTMLElement).getAttribute('data-checked') === 'true' }
+    },
+    priority: 51,
+  }],
+  attrs: {
+    checked: { default: false }
+  },
+  toDOM: (node) => taskListItemDOM(node.attrs.checked),
+  defining: true,
+}
+
 function add(obj: {[prop: string]: any}, props: {[prop: string]: any}) {
   let copy: {[prop: string]: any} = {}
   for (let prop in obj) copy[prop] = obj[prop]
@@ -45,7 +79,9 @@ function add(obj: {[prop: string]: any}, props: {[prop: string]: any}) {
 /// specifying the nodes for a schema. Adds
 /// [`orderedList`](#schema-list.orderedList) as `"ordered_list"`,
 /// [`bulletList`](#schema-list.bulletList) as `"bullet_list"`, and
+/// [`taskList`](#schema-list.taskList) as `"task_list"`, and
 /// [`listItem`](#schema-list.listItem) as `"list_item"`.
+/// [`taskListItem`](#schema-list.taskListItem) as `"task_list_item"`.
 ///
 /// `itemContent` determines the content expression for the list items.
 /// If you want the commands defined in this module to apply to your
@@ -57,7 +93,9 @@ export function addListNodes(nodes: OrderedMap<NodeSpec>, itemContent: string, l
   return nodes.append({
     ordered_list: add(orderedList, {content: "list_item+", group: listGroup}),
     bullet_list: add(bulletList, {content: "list_item+", group: listGroup}),
-    list_item: add(listItem, {content: itemContent})
+    task_list: add(taskList, {content: "task_list_item+", group: listGroup}),
+    list_item: add(listItem, {content: itemContent}),
+    task_list_item: add(taskListItem, {content: itemContent}),
   })
 }
 
@@ -111,6 +149,7 @@ function doWrapInList(tr: Transaction, range: NodeRange, wrappers: {type: NodeTy
   return tr
 }
 
+// TODO: Something fucky here
 /// Build a command that splits a non-empty textblock at the top level
 /// of a list item by also splitting that list item.
 export function splitListItem(itemType: NodeType): Command {

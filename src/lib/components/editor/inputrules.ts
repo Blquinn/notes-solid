@@ -22,6 +22,13 @@ export function bulletListRule(nodeType: NodeType) {
   return wrappingInputRule(/^\s*([-+*])\s$/, nodeType)
 }
 
+/// Given a list node type, returns an input rule that turns a bullet
+/// (dash, plush, or asterisk) at the start of a textblock into a
+/// bullet list.
+export function taskListRule(nodeType: NodeType) {
+  return wrappingInputRule(/^\s*(-\[\s?\])\s$/, nodeType)
+}
+
 /// Given a code block node type, returns an input rule that turns a
 /// textblock starting with three backticks into a code block.
 export function codeBlockRule(nodeType: NodeType) {
@@ -44,6 +51,7 @@ export function buildInputRules(schema: Schema) {
   rules.push(blockQuoteRule(schema.nodes.blockquote))
   rules.push(orderedListRule(schema.nodes.ordered_list))
   rules.push(bulletListRule(schema.nodes.bullet_list))
+  rules.push(taskListRule(schema.nodes.task_list))
   rules.push(codeBlockRule(schema.nodes.code_block))
   rules.push(headingRule(schema.nodes.heading, 6))
   return inputRules({rules})

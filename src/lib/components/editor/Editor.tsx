@@ -83,12 +83,18 @@ export default function Editor() {
     editorView = new EditorView(editor!, {
       scrollThreshold: editorPadding ,
       scrollMargin: editorPadding ,
+      // Handle task_list_item clicks.
+      handleClickOn(view, pos, node, nodePos, event, direct) {
+        if (!direct) return;
+        if (node.type != schema.nodes.task_list_item) return;
+        view.dispatch(view.state.tr.setNodeAttribute(nodePos, 'checked', !node.attrs.checked));
+      },
       state: EditorState.create({
         doc: DOMParser.fromSchema(schema).parse(content!),
         plugins: [
           new Plugin({
             view(view) {
-              return {
+              return { 
                 update: (view, prevState) => {
                   editorChangeBus.emit();
 

@@ -2,7 +2,7 @@ import {
     wrapIn, setBlockType, chainCommands, toggleMark, exitCode,
     joinUp, joinDown, lift, selectParentNode
 } from "prosemirror-commands"
-import { wrapInList, splitListItem, liftListItem, sinkListItem } from "prosemirror-schema-list"
+import { wrapInList, splitListItem, liftListItem, sinkListItem } from "./schema-list";
 import { undo, redo } from "prosemirror-history"
 import { undoInputRule } from "prosemirror-inputrules"
 import type { Command } from "prosemirror-state"
@@ -75,8 +75,11 @@ export function buildKeymap(schema: Schema) {
     if (mac) bind("Ctrl-Enter", cmd);
 
     bind("Enter", splitListItem(schema.nodes.list_item));
+    bind("Enter", splitListItem(schema.nodes.task_list_item));
     bind("Mod-[", liftListItem(schema.nodes.list_item));
     bind("Mod-]", sinkListItem(schema.nodes.list_item));
+    bind("Mod-[", liftListItem(schema.nodes.task_list_item));
+    bind("Mod-]", sinkListItem(schema.nodes.task_list_item));
 
     bind("Shift-Ctrl-0", setBlockType(schema.nodes.paragraph));
     bind("Shift-Ctrl-\\", setBlockType(schema.nodes.code_block));

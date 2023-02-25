@@ -3,7 +3,7 @@ import { setBlockType, toggleMark, wrapIn } from "prosemirror-commands";
 import type { EditorView } from "prosemirror-view";
 import { schema } from "./schema";
 import type { Attrs, MarkType, NodeType } from "prosemirror-model";
-import { wrapInList } from "prosemirror-schema-list";
+import { wrapInList } from "./schema-list";
 import IconButton from "../../skeleton/components/IconButton";
 import { Accessor, createEffect, createSignal, For, onCleanup, Show } from "solid-js";
 import { EventBus } from '@solid-primitives/event-bus';
@@ -18,6 +18,7 @@ import ListOl from "@fortawesome/fontawesome-free/svgs/solid/list-ol.svg";
 import QuoteLeft from "@fortawesome/fontawesome-free/svgs/solid/quote-left.svg";
 import Paragraph from "@fortawesome/fontawesome-free/svgs/solid/paragraph.svg";
 import Heading from "@fortawesome/fontawesome-free/svgs/solid/heading.svg";
+import ListCheck from "@fortawesome/fontawesome-free/svgs/solid/list-check.svg";
 
 
 const headingLevels = [1, 2, 3, 4, 5, 6];
@@ -30,6 +31,7 @@ type Format =
   | "code"
   | "bullet_list"
   | "ordered_list"
+  | "task_list"
   | "blockquote"
   | "code_block"
   | "heading"
@@ -166,6 +168,9 @@ export default function EditorToolbar(props: EditorToolbarProps) {
       case "ordered_list":
         command = wrapInList(schema.nodes.ordered_list);
         break;
+      case "task_list":
+        command = wrapInList(schema.nodes.task_list);
+        break;
       case "blockquote":
         command = wrapIn(schema.nodes.blockquote);
         break;
@@ -229,6 +234,9 @@ export default function EditorToolbar(props: EditorToolbarProps) {
         </IconButton>
         <IconButton onClick={() => onClick("ordered_list")}>
           <ListOl class={iconClasses} />
+        </IconButton>
+        <IconButton onClick={() => onClick("task_list")}>
+          <ListCheck class={iconClasses} />
         </IconButton>
         <IconButton onClick={() => onClick("blockquote")}>
           <QuoteLeft class={iconClasses} />

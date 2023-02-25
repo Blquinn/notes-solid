@@ -1,6 +1,7 @@
 @import 'lib/skeleton/themes/theme-hamlindigo.css';
 @import 'lib/skeleton/styles/all.css';
 @import 'simplebar/dist/simplebar.css';
+@import '@fortawesome/fontawesome-free/css/regular.css';
 
 :root {
   user-select: none;

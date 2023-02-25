@@ -23,7 +23,6 @@ specifiers:
   prosemirror-inputrules: ^1.2.0
   prosemirror-keymap: ^1.2.0
   prosemirror-model: ^1.18.3
-  prosemirror-schema-list: ^1.2.2
   prosemirror-state: ^1.4.2
   prosemirror-transform: ^1.7.0
   prosemirror-view: ^1.29.1
@@ -68,7 +67,6 @@ devDependencies:
   prosemirror-inputrules: 1.2.0
   prosemirror-keymap: 1.2.1
   prosemirror-model: 1.19.0
-  prosemirror-schema-list: 1.2.2
   prosemirror-state: 1.4.2
   prosemirror-transform: 1.7.1
   prosemirror-view: 1.30.1
@@ -1535,14 +1533,6 @@ packages:
     resolution: {integrity: sha512-/CvFGJnwc41EJSfDkQLly1cAJJJmBpZwwUJtwZPTjY2RqZJfM8HVbCreOY/jti8wTRbVyjagcylyGoeJH/g/3w==}
     dependencies:
       orderedmap: 2.1.0
-    dev: true
-
-  /prosemirror-schema-list/1.2.2:
-    resolution: {integrity: sha512-rd0pqSDp86p0MUMKG903g3I9VmElFkQpkZ2iOd3EOVg1vo5Cst51rAsoE+5IPy0LPXq64eGcCYlW1+JPNxOj2w==}
-    dependencies:
-      prosemirror-model: 1.19.0
-      prosemirror-state: 1.4.2
-      prosemirror-transform: 1.7.1
     dev: true
 
   /prosemirror-state/1.4.2:

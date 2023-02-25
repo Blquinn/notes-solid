@@ -93,6 +93,30 @@
 
     // End remove list style reset
 
+    // Task lists
+
+    ul.task-list {
+      > li {
+        padding-left: .25rem;
+
+        &::marker {
+          font: var(--fa-font-regular) !important;
+          content: '\f111' !important;
+          color: #5e72e4 !important;
+        }
+
+        &[data-checked=true] {
+          text-decoration: line-through !important;
+
+          &::marker {
+            font: var(--fa-font-regular) !important;
+            content: '\f058' !important;
+            color: #5e72e4 !important;
+          }
+        }
+      }
+    }
+
     .ProseMirror ol,
     ul,
     pre {
