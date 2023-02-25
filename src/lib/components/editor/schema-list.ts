@@ -1,7 +1,7 @@
-import {findWrapping, liftTarget, canSplit, ReplaceAroundStep, canJoin} from "prosemirror-transform"
-import {Slice, Fragment, NodeSpec, DOMOutputSpec, NodeType, Attrs, NodeRange} from "prosemirror-model"
+import { findWrapping, liftTarget, canSplit, ReplaceAroundStep, canJoin } from "prosemirror-transform"
+import { Slice, Fragment, NodeSpec, DOMOutputSpec, NodeType, Attrs, NodeRange } from "prosemirror-model"
 import OrderedMap from "orderedmap"
-import {Command, EditorState, Transaction, NodeSelection, Selection} from "prosemirror-state"
+import { Command, EditorState, Transaction, NodeSelection, Selection } from "prosemirror-state"
 
 
 const olDOM: DOMOutputSpec = ["ol", 0]
@@ -12,42 +12,44 @@ const liDOM: DOMOutputSpec = ["li", 0]
 const taskListClass = 'task-list';
 const taskListItemClass = 'task-list-item';
 
-const taskListDOM: DOMOutputSpec = ["ul", {class: taskListClass}, 0]
+const taskListDOM: DOMOutputSpec = ["ul", { class: taskListClass }, 0]
 // TODO: This needs to take whether the checkbox is checked or not...
 // I guess it should be a function?
 const taskListItemDOM = (checked: boolean): DOMOutputSpec =>
-  ["li", {class: taskListItemClass, 'data-checked': checked}, 0];
+  ["li", { class: taskListItemClass, 'data-checked': checked }, 0];
 
 /// An ordered list [node spec](#model.NodeSpec). Has a single
 /// attribute, `order`, which determines the number at which the list
 /// starts counting, and defaults to 1. Represented as an `<ol>`
 /// element.
 export const orderedList = {
-  attrs: {order: {default: 1}},
-  parseDOM: [{tag: "ol", getAttrs(dom: HTMLElement) {
-    return {order: dom.hasAttribute("start") ? +dom.getAttribute("start")! : 1}
-  }}],
+  attrs: { order: { default: 1 } },
+  parseDOM: [{
+    tag: "ol", getAttrs(dom: HTMLElement) {
+      return { order: dom.hasAttribute("start") ? +dom.getAttribute("start")! : 1 }
+    }
+  }],
   toDOM(node) {
-    return node.attrs.order == 1 ? olDOM : ["ol", {start: node.attrs.order}, 0]
+    return node.attrs.order == 1 ? olDOM : ["ol", { start: node.attrs.order }, 0]
   }
 } as NodeSpec
 
 /// A bullet list node spec, represented in the DOM as `<ul>`.
 export const bulletList: NodeSpec = {
-  parseDOM: [{tag: "ul"}],
+  parseDOM: [{ tag: "ul" }],
   toDOM() { return ulDOM }
 }
 
 /// A list item (`<li>`) spec.
 export const listItem: NodeSpec = {
-  parseDOM: [{tag: "li"}],
+  parseDOM: [{ tag: "li" }],
   toDOM() { return liDOM },
   defining: true
 }
 
 /// A task list node spec, represented in the DOM as `<ul>` with a task list class.
 export const taskList: NodeSpec = {
-  parseDOM: [{tag: `ul.${taskListClass}`, priority: 51}],
+  parseDOM: [{ tag: `ul.${taskListClass}`, priority: 51 }],
   toDOM() { return taskListDOM }
 }
 
@@ -68,8 +70,8 @@ export const taskListItem: NodeSpec = {
   defining: true,
 }
 
-function add(obj: {[prop: string]: any}, props: {[prop: string]: any}) {
-  let copy: {[prop: string]: any} = {}
+function add(obj: { [prop: string]: any }, props: { [prop: string]: any }) {
+  let copy: { [prop: string]: any } = {}
   for (let prop in obj) copy[prop] = obj[prop]
   for (let prop in props) copy[prop] = props[prop]
   return copy
@@ -91,11 +93,11 @@ function add(obj: {[prop: string]: any}, props: {[prop: string]: any}) {
 /// `"block"`.
 export function addListNodes(nodes: OrderedMap<NodeSpec>, itemContent: string, listGroup?: string): OrderedMap<NodeSpec> {
   return nodes.append({
-    ordered_list: add(orderedList, {content: "list_item+", group: listGroup}),
-    bullet_list: add(bulletList, {content: "list_item+", group: listGroup}),
-    task_list: add(taskList, {content: "task_list_item+", group: listGroup}),
-    list_item: add(listItem, {content: itemContent}),
-    task_list_item: add(taskListItem, {content: itemContent}),
+    ordered_list: add(orderedList, { content: "list_item+", group: listGroup }),
+    bullet_list: add(bulletList, { content: "list_item+", group: listGroup }),
+    task_list: add(taskList, { content: "task_list_item+", group: listGroup }),
+    list_item: add(listItem, { content: itemContent }),
+    task_list_item: add(taskListItem, { content: itemContent }),
   })
 }
 
@@ -104,8 +106,8 @@ export function addListNodes(nodes: OrderedMap<NodeSpec>, itemContent: string, l
 /// value to indicate whether this is possible, but don't actually
 /// perform the change.
 export function wrapInList(listType: NodeType, attrs: Attrs | null = null): Command {
-  return function(state: EditorState, dispatch?: (tr: Transaction) => void) {
-    let {$from, $to} = state.selection
+  return function (state: EditorState, dispatch?: (tr: Transaction) => void) {
+    let { $from, $to } = state.selection
     let range = $from.blockRange($to), doJoin = false, outerRange = range
     if (!range) return false
     // This is at the top of an existing list item
@@ -125,14 +127,14 @@ export function wrapInList(listType: NodeType, attrs: Attrs | null = null): Comm
   }
 }
 
-function doWrapInList(tr: Transaction, range: NodeRange, wrappers: {type: NodeType, attrs?: Attrs | null}[],
-                      joinBefore: boolean, listType: NodeType) {
+function doWrapInList(tr: Transaction, range: NodeRange, wrappers: { type: NodeType, attrs?: Attrs | null }[],
+  joinBefore: boolean, listType: NodeType) {
   let content = Fragment.empty
   for (let i = wrappers.length - 1; i >= 0; i--)
     content = Fragment.from(wrappers[i].type.create(wrappers[i].attrs, content))
 
   tr.step(new ReplaceAroundStep(range.start - (joinBefore ? 2 : 0), range.end, range.start, range.end,
-                                new Slice(content, 0, 0), wrappers.length, true))
+    new Slice(content, 0, 0), wrappers.length, true))
 
   let found = 0
   for (let i = 0; i < wrappers.length; i++) if (wrappers[i].type == listType) found = i + 1
@@ -153,8 +155,8 @@ function doWrapInList(tr: Transaction, range: NodeRange, wrappers: {type: NodeTy
 /// Build a command that splits a non-empty textblock at the top level
 /// of a list item by also splitting that list item.
 export function splitListItem(...itemTypes: NodeType[]): Command {
-  return function(state: EditorState, dispatch?: (tr: Transaction) => void) {
-    let {$from, $to, node} = state.selection as NodeSelection
+  return function (state: EditorState, dispatch?: (tr: Transaction) => void) {
+    let { $from, $to, node } = state.selection as NodeSelection
     if ((node && node.isBlock) || $from.depth < 2 || !$from.sameParent($to)) return false
     let grandParent = $from.node(-1)
     if (!itemTypes.includes(grandParent.type)) return false
@@ -163,7 +165,7 @@ export function splitListItem(...itemTypes: NodeType[]): Command {
       // list item should be split. Otherwise, bail out and let next
       // command handle lifting.
       if ($from.depth == 3 || !itemTypes.includes($from.node(-3).type) ||
-          $from.index(-2) != $from.node(-2).childCount - 1) return false
+        $from.index(-2) != $from.node(-2).childCount - 1) return false
       if (dispatch) {
         let wrap = Fragment.empty
         let depthBefore = $from.index(-1) ? 1 : $from.index(-2) ? 2 : 3
@@ -172,7 +174,7 @@ export function splitListItem(...itemTypes: NodeType[]): Command {
         for (let d = $from.depth - depthBefore; d >= $from.depth - 3; d--)
           wrap = Fragment.from($from.node(d).copy(wrap))
         let depthAfter = $from.indexAfter(-1) < $from.node(-2).childCount ? 1
-            : $from.indexAfter(-2) < $from.node(-3).childCount ? 2 : 3
+          : $from.indexAfter(-2) < $from.node(-3).childCount ? 2 : 3
         // Add a second list item with an empty default start node
         wrap = wrap.append(Fragment.from(grandParent.type.createAndFill()))
         let start = $from.before($from.depth - (depthBefore - 1))
@@ -189,7 +191,7 @@ export function splitListItem(...itemTypes: NodeType[]): Command {
     }
     let nextType = $to.pos == $from.end() ? grandParent.contentMatchAt(0).defaultType : null
     let tr = state.tr.delete($from.pos, $to.pos)
-    let types = nextType ? [null, {type: nextType}] : undefined
+    let types = nextType ? [null, { type: nextType }] : undefined
     if (!canSplit(tr.doc, $from.pos, 2, types)) return false
     if (dispatch) dispatch(tr.split($from.pos, 2, types).scrollIntoView())
     return true
@@ -199,8 +201,8 @@ export function splitListItem(...itemTypes: NodeType[]): Command {
 /// Create a command to lift the list item around the selection up into
 /// a wrapping list.
 export function liftListItem(...itemTypes: NodeType[]): Command {
-  return function(state: EditorState, dispatch?: (tr: Transaction) => void) {
-    let {$from, $to} = state.selection
+  return function (state: EditorState, dispatch?: (tr: Transaction) => void) {
+    let { $from, $to } = state.selection
     let range = $from.blockRange($to, node => node.childCount > 0 && itemTypes.includes(node.firstChild!.type))
     if (!range) return false
     if (!dispatch) return true
@@ -218,7 +220,7 @@ function liftToOuterList(state: EditorState, dispatch: (tr: Transaction) => void
     // There are siblings after the lifted items, which must become
     // children of the last item
     tr.step(new ReplaceAroundStep(end - 1, endOfList, end, endOfList,
-                                  new Slice(Fragment.from(itemType.create(null, range.parent.copy())), 1, 0), 1, true))
+      new Slice(Fragment.from(itemType.create(null, range.parent.copy())), 1, 0), 1, true))
     range = new NodeRange(tr.doc.resolve(range.$from.pos), tr.doc.resolve(endOfList), range.depth)
   }
   const target = liftTarget(range)
@@ -242,16 +244,16 @@ function liftOutOfList(state: EditorState, dispatch: (tr: Transaction) => void, 
   let atStart = range.startIndex == 0, atEnd = range.endIndex == list.childCount
   let parent = $start.node(-1), indexBefore = $start.index(-1)
   if (!parent.canReplace(indexBefore + (atStart ? 0 : 1), indexBefore + 1,
-                         item.content.append(atEnd ? Fragment.empty : Fragment.from(list))))
+    item.content.append(atEnd ? Fragment.empty : Fragment.from(list))))
     return false
   let start = $start.pos, end = start + item.nodeSize
   // Strip off the surrounding list. At the sides where we're not at
   // the end of the list, the existing list is closed. At sides where
   // this is the end, it is overwritten to its end.
   tr.step(new ReplaceAroundStep(start - (atStart ? 1 : 0), end + (atEnd ? 1 : 0), start + 1, end - 1,
-                                new Slice((atStart ? Fragment.empty : Fragment.from(list.copy(Fragment.empty)))
-                                          .append(atEnd ? Fragment.empty : Fragment.from(list.copy(Fragment.empty))),
-                                          atStart ? 0 : 1, atEnd ? 0 : 1), atStart ? 0 : 1))
+    new Slice((atStart ? Fragment.empty : Fragment.from(list.copy(Fragment.empty)))
+      .append(atEnd ? Fragment.empty : Fragment.from(list.copy(Fragment.empty))),
+      atStart ? 0 : 1, atEnd ? 0 : 1), atStart ? 0 : 1))
   dispatch(tr.scrollIntoView())
   return true
 }
@@ -259,8 +261,8 @@ function liftOutOfList(state: EditorState, dispatch: (tr: Transaction) => void, 
 /// Create a command to sink the list item around the selection down
 /// into an inner list.
 export function sinkListItem(...itemTypes: NodeType[]): Command {
-  return function(state, dispatch) {
-    let {$from, $to} = state.selection
+  return function (state, dispatch) {
+    let { $from, $to } = state.selection
     let range = $from.blockRange($to, node => node.childCount > 0 && itemTypes.includes(node.firstChild!.type))
     if (!range) return false
     let startIndex = range.startIndex
@@ -273,11 +275,11 @@ export function sinkListItem(...itemTypes: NodeType[]): Command {
       const itemType = nodeBefore.type;
       let inner = Fragment.from(nestedBefore ? itemType.create() : null)
       let slice = new Slice(Fragment.from(itemType.create(null, Fragment.from(parent.type.create(null, inner)))),
-                            nestedBefore ? 3 : 1, 0)
+        nestedBefore ? 3 : 1, 0)
       let before = range.start, after = range.end
       dispatch(state.tr.step(new ReplaceAroundStep(before - (nestedBefore ? 3 : 1), after,
-                                                   before, after, slice, 1, true))
-               .scrollIntoView())
+        before, after, slice, 1, true))
+        .scrollIntoView())
     }
     return true
   }
