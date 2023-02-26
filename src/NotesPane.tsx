@@ -1,6 +1,7 @@
+import { join } from "path-browserify";
 import { Accessor, useContext } from "solid-js";
 import NoteList from "./lib/components/notelist/NoteList";
-import { rootNode, TTreeNode } from "./lib/components/treeview/treeContext";
+import { arrayEquals, rootNode, TTreeNode } from "./lib/components/treeview/treeContext";
 import TreeView from "./lib/components/treeview/TreeView";
 import { DirectoryTreeContext, DirectoryMeta } from "./state";
 
@@ -9,7 +10,7 @@ export interface NotesPaneProps {
 }
 
 export default function NotesPane(props: NotesPaneProps) {
-  const treeCellContent = (node: TTreeNode<DirectoryMeta>) => node.label;
+  const treeCellContent = (node: TTreeNode<DirectoryMeta>, path: string[]) => node.label;
 
   const [dirTree, store] = useContext(DirectoryTreeContext);
 
@@ -33,7 +34,7 @@ export default function NotesPane(props: NotesPaneProps) {
         <button
           class="w-full p-2 pl-7 text-left nav-list-item"
           classList={{
-            ['bg-primary-active-token']: dirTree.selectedNode == rootNode,
+            ['bg-primary-active-token']: arrayEquals(dirTree.selectedNode, rootNode),
           }}
           onClick={() => store.select(rootNode)}>Notes</button>
 

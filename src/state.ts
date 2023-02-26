@@ -4,7 +4,7 @@ import * as path from 'path-browserify';
 import { join } from "@tauri-apps/api/path";
 
 // A directory is just its path.
-export type DirectoryMeta = string;
+export type DirectoryMeta = string[];
 
 export interface NoteMeta {
   id: string

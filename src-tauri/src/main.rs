@@ -62,21 +62,28 @@ fn is_note_std(entry: &std::fs::DirEntry) -> bool {
     entry.path().extension().map_or(false, |e| e == "xhtml")
 }
 
-fn load_note_meta(dir_path: &PathBuf, path: &PathBuf) -> anyhow::Result<NoteMeta> {
-    let mut nm = NoteMeta::default();
-
-    nm.path = path
+fn path_to_vec(dir_path: &PathBuf, path: &PathBuf) -> anyhow::Result<Vec<String>> {
+    let mut vec: Vec<String> = path
         .strip_prefix(dir_path)?
         .components()
         .map(|c| c.as_os_str().to_str().unwrap().to_owned())
         .collect();
 
-    let ext = path.extension().unwrap().to_str().unwrap().to_owned();
+    let ext = path.extension().map(|e| { e.to_str().unwrap().to_owned() });
     let title = path.file_stem().unwrap().to_str().unwrap().to_owned();
 
-    let len = nm.path.len();
-    nm.path[len-1] = title;
-    nm.path.push(ext);
+    let len = vec.len();
+    vec[len-1] = title;
+    if let Some(e) = ext {
+        vec.push(e);
+    }
+    Ok(vec)
+}
+
+fn load_note_meta(dir_path: &PathBuf, path: &PathBuf) -> anyhow::Result<NoteMeta> {
+    let mut nm = NoteMeta::default();
+
+    nm.path = path_to_vec(dir_path, path)?;
 
     let mut reader = match Reader::from_file(&path) {
         Ok(reader) => reader,
@@ -138,7 +145,7 @@ fn load_note_meta(dir_path: &PathBuf, path: &PathBuf) -> anyhow::Result<NoteMeta
 
 /// Loads a list of paths.
 #[tauri::command]
-fn load_note_dirs(parent_dir: &str) -> CommandResult<Vec<String>> {
+fn load_note_dirs(parent_dir: &str) -> CommandResult<Vec<Vec<String>>> {
     let dir_path = Path::new(parent_dir);
 
     Ok(WalkDir::new(&dir_path)
@@ -146,8 +153,7 @@ fn load_note_dirs(parent_dir: &str) -> CommandResult<Vec<String>> {
         .map(|res| match res {
             Ok(e) => {
                 if e.file_type().is_dir() && e.path() != dir_path {
-                    let path = e.path().strip_prefix(dir_path).ok()?;
-                    Some(path.to_str().unwrap().to_owned())
+                    Some(path_to_vec(&dir_path.to_path_buf(), &e.path().to_path_buf()).unwrap())
                 } else {
                     None
                 }

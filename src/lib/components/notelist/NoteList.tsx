@@ -1,4 +1,4 @@
-import { sep } from "@tauri-apps/api/path";
+import { join, sep } from "@tauri-apps/api/path";
 import { Icon } from "solid-heroicons";
 import { folder } from "solid-heroicons/solid";
 import { createEffect, For, on, Show, useContext } from "solid-js";
@@ -22,24 +22,11 @@ export default function NoteList() {
       return;
     }
 
-    let path: string | undefined;
     try {
       notesStore.setLoading(true);
 
-      if (dirTree.selectedNode == rootNode) {
-        path = '';
-      }
-
-      // 1. Load all the notes from the directory
-      // 2. Order the notes by modification date.
-      // 3. Select the first note
-      const dirNode = getSelectedNode(dirTree);
-      if (dirNode) {
-        path = dirNode.path;
-      }
-
-      // TODO: Pass around actual 
-      const notes = await loadDirectory(path ?? '', path === undefined);
+      const path = dirTree.selectedNode;
+      const notes = await loadDirectory(path ?? [], path === undefined);
       if (notes.isOk) {
         notesStore.setNotes(notes.value);
         if (notes.value.length == 0) {

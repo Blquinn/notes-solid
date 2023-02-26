@@ -3,14 +3,13 @@ import AppShell from "./lib/skeleton/components/AppShell";
 
 import { Icon } from "solid-heroicons";
 import { cog_6Tooth, pencilSquare } from "solid-heroicons/solid";
-import { createSignal, Match, onMount, Switch, useContext } from "solid-js";
+import { Match, onMount, Switch, useContext } from "solid-js";
 import DirectoryButton from "./lib/components/DirectoryButton";
 import Editor from "./lib/components/editor/Editor";
 import { NoteListContextProvider, NotesListContext } from "./lib/components/notelist/context";
 import { TreeProvider } from "./lib/components/treeview/treeContext";
 import { getNotesDataDir, loadDirectoryTree, saveNote } from "./lib/persistence";
 import LightSwitch from "./lib/skeleton/utlities/LightSwitch";
-import Modal from "./lib/skeleton/utlities/Modal/Modal";
 import NotesPane from "./NotesPane";
 import { DirectoryTreeContext, LoadingError, NoteMeta, notesDirLoadingState, setNotesDirLoadingState, type DirectorySet } from "./state";
 import { v1 } from 'uuid';
@@ -20,6 +19,8 @@ import ExpandLeftSidebar from './assets/icons/expand_left_sidebar.svg';
 import { createStorageSignal } from "./lib/localStorage";
 import { join } from "@tauri-apps/api/path";
 import LoadingSpinner from "./lib/components/LoadingSpinner";
+import { ModalContext, ModalContextProvider } from "./lib/skeleton/utlities/Modal/context";
+import * as p from 'path-browserify';
 
 function Shell() {
   const [notesListState, notesListStore] = useContext(NotesListContext);
@@ -29,17 +30,15 @@ function Shell() {
   const onNewNoteButtonClicked = async () => {
     const id = v1();
     const title = 'New Note';
-    const path = await join(dirTreeState.selectedNode ?? '', `${title}.xhtml`)
+    
     const note: NoteMeta = {
       id,
-      path,
-      dirPath: '',
-      title,
+      path: [...(dirTreeState.selectedNode ?? []), title, 'xhtml'],
       created: new Date(),
       updated: new Date(),
     }
     await saveNote(note);
-    notesListStore.updateNote(note);
+    notesListStore.updateNote(note, note);
   }
 
   // TODO: Figure out tooltips
@@ -66,17 +65,42 @@ function Shell() {
     </span>
   );
 
-  const [settingsOpen, setSettingsOpen] = createSignal(false);
 
-  const settingsButton = (
-    <>
-      <button onClick={() => setSettingsOpen(true)} class="h-6 w-6">
-        <Icon path={cog_6Tooth} />
-      </button>
-    </>
+  const onDirectorySelected = (dir: string | null) => {
+    if (dir == null) {
+      return;
+    }
+
+    loadNotes(dir);
+  }
+
+  const settingsPanel = (
+    <div class="p-4">
+      <h3>Settings Pannel</h3>
+      <div>
+        <span><b>Brightness </b></span>
+        <span><LightSwitch /></span>
+      </div>
+      <div>
+        <b>Notes directory:</b>
+        <div class="h-full w-full flex justify-center items-center">
+          <DirectoryButton buttonClass="variant-filled" name="set-notes-dir-button" onAccept={onDirectorySelected} />
+        </div>
+      </div>
+    </div>
   );
 
-  const header = (
+  const settingsButton = () => {
+    const [_ms, modalStore] = useContext(ModalContext);
+
+    return (
+      <button onClick={() => modalStore.setContent(settingsPanel)} class="h-6 w-6">
+        <Icon path={cog_6Tooth} />
+      </button>
+    );
+  }
+
+  const header = () => (
     <AppBar padding="p-2" shadow="drop-shadow" lead={headerLead} trail={settingsButton} />
   );
 
@@ -97,14 +121,6 @@ function Shell() {
     await loadNotes(noteDir)
   });
 
-  const onDirectorySelected = (dir: string | null) => {
-    if (dir == null) {
-      return;
-    }
-
-    loadNotes(dir);
-  }
-
   return (
     <Switch>
       {/* TODO: This should just be a loading screen */}
@@ -117,22 +133,6 @@ function Shell() {
         <span>Got error when loading notes directory: {(notesDirLoadingState() as LoadingError).error}.</span>
       </Match>
       <Match when={notesDirLoadingState().state == 'loaded'}>
-        <Modal open={settingsOpen} onClose={() => { setSettingsOpen(false) }}>
-          <div class="p-4">
-            <h3>Settings Pannel</h3>
-            <div>
-              <span><b>Brightness </b></span>
-              <span><LightSwitch /></span>
-            </div>
-            <div>
-              <b>Notes directory:</b>
-              <div class="h-full w-full flex justify-center items-center">
-                <DirectoryButton buttonClass="variant-filled" name="set-notes-dir-button" onAccept={onDirectorySelected} />
-              </div>
-            </div>
-          </div>
-        </Modal>
-
         <AppShell
           leftSideBarContent={
             <NotesPane showDirectoryTree={showDirTree} />
@@ -162,7 +162,9 @@ function App() {
   return (
     <TreeProvider tree={state.tree} context={DirectoryTreeContext}>
       <NoteListContextProvider>
-        <Shell />
+        <ModalContextProvider>
+          <Shell />
+        </ModalContextProvider>
       </NoteListContextProvider>
     </TreeProvider>
   );

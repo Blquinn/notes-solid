@@ -67,9 +67,8 @@ const fileName = (path: string): string => {
   return p.basename(path, p.extname(path));
 }
 
-const dirName = (path: string): string => {
-  const chunks = path.split(sep);
-  return chunks[chunks.length-1];
+const dirName = (path: string[]): string => {
+  return path[path.length-1]
 }
 
 // TODO: Make sure all these work cross platform.
@@ -111,11 +110,11 @@ function buildDirectoryTree(dirs: DirectoryMeta[]): TTree<DirectoryMeta> {
   } = { tree };
 
   dirs.forEach(dir => {
-    dir.split(sep).reduce((r, name: string) => {
+    dir.reduce((r, name: string) => {
       if (!r[name]) {
         r[name] = { tree: [] };
 
-        const node: TTreeNode<DirectoryMeta> = { id: dir, label: dirName(dir) };
+        const node: TTreeNode<DirectoryMeta> = { id: dirName(dir), label: dirName(dir) };
         node.children = r[name].tree;
 
         r.tree.push(node);
@@ -129,7 +128,7 @@ function buildDirectoryTree(dirs: DirectoryMeta[]): TTree<DirectoryMeta> {
 
 export async function loadDirectoryTree(rootDir: string): Promise<Result<TTree<DirectoryMeta>, string>> {
   try {
-    const dirs: string[] = await invoke("load_note_dirs", { parentDir: rootDir });
+    const dirs: string[][] = await invoke("load_note_dirs", { parentDir: rootDir });
     return Result.ok(buildDirectoryTree(dirs));
   } catch (e) {
     console.error('Failed to load notes tree.', e);
@@ -156,9 +155,9 @@ function mapNoteDto(dto: NoteMetaDto): NoteMeta {
   }
 }
 
-export async function loadDirectory(dir: string, isRoot: boolean): Promise<Result<NoteMeta[], string>> {
+export async function loadDirectory(dir: string[], isRoot: boolean): Promise<Result<NoteMeta[], string>> {
   try {
-    const absDir = await join(notesDir()!, dir);
+    const absDir = await join(notesDir()!, ...dir);
     const notes: NoteMetaDto[] = await invoke("load_notes_dir", { dir: absDir, isRoot });
     return Result.ok(notes.map(mapNoteDto));
   } catch (e) {

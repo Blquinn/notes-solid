@@ -1,7 +1,7 @@
-import { sep } from "@tauri-apps/api/path";
 import { FragmentProps } from "solid-headless/dist/types/utils/Fragment";
 import { Context as SolidContext, createContext } from "solid-js";
 import { createStore, produce } from "solid-js/store";
+import * as p from 'path-browserify';
 
 export type TreeIndex = number[];
 
@@ -15,12 +15,12 @@ export type TTreeNode<T> = {
 export type TTree<T> = TTreeNode<T>[];
 
 // Root represents the first 
-export const rootNode = '';
+export const rootNode = [];
 
 export type TreeState<T> = {
   tree: TTree<T>;
   expandedNodes: { [key: string]: boolean }; // ID -> expanded
-  selectedNode?: string; // ID of selected node
+  selectedNode?: string[]; // ID of selected node
 };
 
 export interface TreeProviderProps<T> extends FragmentProps {
@@ -28,44 +28,47 @@ export interface TreeProviderProps<T> extends FragmentProps {
   tree: TTree<T>;
 }
 
-function dfs<T>(tree: TTree<T>, id: string, path: string[]): TTreeNode<T> | undefined {
+function dfs<T>(tree: TTree<T>, path: string[], level: number = 0): TTreeNode<T> | undefined {
+  if (level > path.length-1) return undefined;
+
   for (let node of tree) {
-    path.push(node.label);
-    if (node.id == id) {
-      return node;
+    if (node.id == path[level]) {
+      if (level == path.length-1)
+        return node;
+      if (node.children)
+        return dfs(node.children, path, level + 1);
     }
-    if (node.children) {
-      const n = dfs(node.children, id, path)
-      if (n) {
-        return n;
-      }
-    }
-    path.pop();
   }
 
   return undefined;
 }
 
-export type NodeSelection<T> = {
-  path: string
-  node: TTreeNode<T>
-}
+// export type NodeSelection<T> = {
+//   path: string[]
+//   node: TTreeNode<T>
+// }
 
-export function getSelectedNode<T>(state: TreeState<T>): NodeSelection<T> | undefined {
+export function getSelectedNode<T>(state: TreeState<T>): TTreeNode<T> | undefined {
   if (!state.selectedNode) {
     return undefined;
   }
 
-  const path: string[] = [];
-  const node = dfs(state.tree, state.selectedNode, path);
+  const node = dfs(state.tree, state.selectedNode);
   if (!node) {
     return undefined;
   }
 
-  return {
-    node,
-    path: path.join(sep),
+  return node
+}
+
+export function arrayEquals<T>(arr1?: T[], arr2?: T[]): boolean {
+  if (arr1 === undefined && arr2 === undefined) return true;
+  if (arr1 === undefined || arr2 === undefined) return false;
+  if (arr1.length !== arr2.length) return false;
+  for (let i = 0; i < arr1.length; i++) {
+    if (arr1[i] !== arr2[i]) return false;
   }
+  return true;
 }
 
 function getNodeAtIndex<T>(tree: TTree<T>, index: TreeIndex): TTreeNode<T> {
@@ -79,8 +82,8 @@ function getNodeAtIndex<T>(tree: TTree<T>, index: TreeIndex): TTreeNode<T> {
 type TTreeContext<T> = [
   TreeState<T>,
   {
-    select(id?: string): void;
-    expand(id: string): void;
+    select(path?: string[]): void;
+    expand(path: string[]): void;
     updateTreeNode(index: TreeIndex, fn: (existing: T) => T): void;
     replaceTree(tree: TTree<T>): void;
     addNode(parentIndex: TreeIndex, node: TTreeNode<T>): void;
@@ -116,11 +119,11 @@ export function TreeProvider<T>(props: TreeProviderProps<T>) {
   const store: TTreeContext<T> = [
     state,
     {
-      select(id) {
-        setState("selectedNode", id);
+      select(path) {
+        setState("selectedNode", path);
       },
-      expand(id) {
-        setState('expandedNodes', id, (expanded) => !expanded);
+      expand(path) {
+        setState('expandedNodes', p.join(...path), (expanded) => !expanded);
       },
       updateTreeNode(index, fn) {
         (setState as any)('tree', ...intersperse(index, 'children'), fn)
