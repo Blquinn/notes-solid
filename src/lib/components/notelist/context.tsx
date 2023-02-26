@@ -6,7 +6,7 @@ import { NoteMeta } from "../../../state";
 type NotesListState = {
   loading: boolean,
   notes: NoteMeta[];
-  selectedNote?: string
+  selectedNote?: string // Note id
 }
 
 export const NotesListContext = createContext<NoteListContext>([
@@ -20,12 +20,12 @@ type NoteListContext = [
     select(id?: string): void;
     setNotes(notes: NoteMeta[]): void;
     setLoading(loading: boolean): void;
-    updateNote(note: NoteMeta): void;
+    updateNote(currentNote: NoteMeta, newNote: NoteMeta): void;
   }
 ];
 
 export function findActiveNote(state: NotesListState): NoteMeta | undefined {
-  return state.notes.find(n => n.path == state.selectedNote);
+  return state.notes.find(n => n.id == state.selectedNote);
 }
 
 export function NoteListContextProvider(props: FragmentProps) {
@@ -48,8 +48,8 @@ export function NoteListContextProvider(props: FragmentProps) {
       setNotes(notes) {
         setState('notes', notes);
       },
-      updateNote(note) {
-        setState('notes', [note, ...state.notes.filter(n => n.id !== note.id)]);
+      updateNote(currentNote, newNote) {
+        setState('notes', [newNote, ...state.notes.filter(n => n.id !== currentNote.id)]);
       }
     },
   ];

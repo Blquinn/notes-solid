@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api";
 import { DOMParser as ProseDOMParser, DOMSerializer, Fragment, Node as ProseNode } from "prosemirror-model";
-import { DirectoryMeta, NoteMeta, notesDir } from "../state";
+import { DirectoryMeta, NoteMeta, noteMetaAbsPath, noteMetaFilePath, notesDir } from "../state";
 import { schema } from "./components/editor/schema";
 import { TTree, TTreeNode } from "./components/treeview/treeContext";
 import { readTextFile, writeTextFile, createDir, exists } from '@tauri-apps/api/fs';
@@ -78,17 +78,14 @@ const dirPath = (path: string, title: string): string => {
   return path.substring(0, idx-1)
 }
 
-export const deserializeDocument = (path: string, doc: string): ParseResult => {
+export const deserializeDocument = (path: string[], doc: string): ParseResult => {
   const dom = new DOMParser().parseFromString(doc, 'application/xhtml+xml');
   const head = dom.head;
-  const title = fileName(path);
 
   return {
     note: {
       path,
-      dirPath: dirPath(path, title),
       id: getMetaContent(head, 'id') ?? '',
-      title,
       created: getMetaDateOrNow(head, 'created'),
       updated: getMetaDateOrNow(head, 'updated'),
     },
@@ -142,8 +139,9 @@ export async function loadDirectoryTree(rootDir: string): Promise<Result<TTree<D
 
 export interface NoteMetaDto {
   id: string
-  title: string
-  path: string
+  // Path is the relative path split on directories and the file extension.
+  // e.g. ['dir', 'subdir', 'filename', 'xhtml']
+  path: string[]
   created: string 
   updated: string
 }
@@ -153,7 +151,6 @@ function mapNoteDto(dto: NoteMetaDto): NoteMeta {
 
   return {
     ...dto,
-    dirPath: dirPath(dto.path, dto.title),
     created: defaultDate(dto.created),
     updated: defaultDate(dto.updated)
   }
@@ -172,7 +169,7 @@ export async function loadDirectory(dir: string, isRoot: boolean): Promise<Resul
 }
 
 export async function loadNote(note: NoteMeta): Promise<ParseResult> {
-  const path = await join(notesDir()!, note.path);
+  const path = await noteMetaAbsPath(note);
   if (! await exists(path)) {
     await saveNote(note);
   }
@@ -183,7 +180,7 @@ export async function loadNote(note: NoteMeta): Promise<ParseResult> {
 
 export async function saveNote(note: NoteMeta, content?: Fragment): Promise<void> {
   const xml = serializeDocument(note, content);
-  const path = await join(notesDir()!, note.path);
+  const path = await noteMetaAbsPath(note);
   await writeTextFile(path, xml);
 }
 

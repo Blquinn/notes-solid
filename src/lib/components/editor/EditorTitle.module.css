@@ -1,0 +1,9 @@
+.title {
+  line-height: 1.42;
+  padding: 12px 15px;
+}
+
+.title:focus {
+  box-shadow: none;
+}
+

@@ -1,6 +1,6 @@
 import { createEffect, createSignal, on, onMount, Show, useContext } from "solid-js";
 
-import { NoteMeta } from "../../../state";
+import { NoteMeta, noteMetaTitle } from "../../../state";
 import { EditorState, Plugin } from "prosemirror-state"
 import { EditorView } from "prosemirror-view"
 import { keymap } from "prosemirror-keymap"
@@ -20,6 +20,7 @@ import EditorToolbar from "./EditorToolbar";
 import debounce from 'lodash.debounce';
 import { loadNote, saveNote } from "../../persistence";
 import { findActiveNote, NotesListContext } from "../notelist/context";
+import EditorTitle from "./EditorTitle";
 
 
 const editorPadding = 10; // px
@@ -30,11 +31,10 @@ export default function Editor() {
 
   const saveDebounce = debounce(async (note: NoteMeta, view: EditorView) => {
     const updatedNote: NoteMeta = {...note, updated: new Date()};
-    notesStore.updateNote(updatedNote);
+    notesStore.updateNote(note, updatedNote);
     await saveNote(updatedNote, view.state.doc.content);
   }, 300)
 
-  let titleEl: HTMLInputElement | undefined;
   let editor: HTMLDivElement | undefined;
   let content: HTMLDivElement | undefined;
   let editorView: EditorView | undefined;
@@ -64,7 +64,7 @@ export default function Editor() {
       return;
     }
 
-    setTitle(note.title);
+    setTitle(noteMetaTitle(note));
 
     const res = await loadNote(note);
     const newState = EditorState.create({
@@ -124,18 +124,6 @@ export default function Editor() {
     await loadSelectedNote();
   });
 
-  const onTitleInput = (e: InputEvent) => {
-    // TODO: Save and update state.
-  }
-
-  // TODO: Save and update state.
-  const onTitleKey = (e: KeyboardEvent) => {
-    if (e.key == 'Enter') {
-      e.preventDefault();
-      editorView?.focus();
-    }
-  }
-
   const onEditorKey = (e: KeyboardEvent) => {
     // const selection = editorView?.state.selection;
     // if (titleEl && e.code == 'Backspace' && selection?.empty && (selection?.$head.pos ?? -1) == 1) {
@@ -156,15 +144,7 @@ export default function Editor() {
 
   return (
     <>
-      <input
-        type="text"
-        ref={titleEl}
-        class={`${styles.title} text-3xl bg-surface-50-900-token border-none text-ellipsis`}
-        placeholder="Note title..."
-        value={title() ?? ''}
-        onInput={onTitleInput}
-        onKeyDown={onTitleKey}
-      />
+      <EditorTitle onEnterPressed={() => editorView!.focus()} title={title} />
       <div 
         onKeyDown={onEditorKey}
         ref={editor}

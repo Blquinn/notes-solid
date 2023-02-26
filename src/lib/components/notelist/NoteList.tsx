@@ -1,7 +1,8 @@
+import { sep } from "@tauri-apps/api/path";
 import { Icon } from "solid-heroicons";
 import { folder } from "solid-heroicons/solid";
 import { createEffect, For, on, Show, useContext } from "solid-js";
-import { DirectoryTreeContext } from "../../../state";
+import { DirectoryTreeContext, noteMetaDirPath, noteMetaIsInDir, noteMetaTitle } from "../../../state";
 import { loadDirectory } from "../../persistence";
 import LoadingSpinner from "../LoadingSpinner";
 import { getSelectedNode, rootNode } from "../treeview/treeContext";
@@ -44,7 +45,7 @@ export default function NoteList() {
         if (notes.value.length == 0) {
           notesStore.select(undefined);
         } else {
-          notesStore.select(notes.value[0].path);
+          notesStore.select(notes.value[0].id);
         }
       } else {
         // TODO: Show error state.
@@ -69,25 +70,25 @@ export default function NoteList() {
             <li
               class="list-item !m-0"
               classList={{
-                ['bg-primary-active-token']: note.path == notesState.selectedNote,
+                ['bg-primary-active-token']: note.id == notesState.selectedNote,
               }}
             >
               <a href="#" 
                 class="block flex flex-col !items-start"
-                onClick={() => notesStore.select(note.path)}
+                onClick={() => notesStore.select(note.id)}
               >
-                <div>{note.title}</div>
+                <div>{noteMetaTitle(note)}</div>
 
                 {/* Show directory when the note is in a notebook. */}
-                <Show when={dirTree.selectedNode === undefined && note.dirPath}>
+                <Show when={dirTree.selectedNode === undefined && noteMetaIsInDir(note)}>
                   <div class="!ml-0"
                     classList={{
-                      ['text-surface-500-400-token']: note.path !== notesState.selectedNote,
+                      ['text-surface-500-400-token']: note.id !== notesState.selectedNote,
                     }}
                   >
                     <span class="flex flex-row items-center gap-1">
                       <Icon path={folder} class="h-4 w-4" />
-                      <sub class="flex-1">{note.dirPath}</sub>
+                      <sub class="flex-1">{noteMetaDirPath(note).join(sep)}</sub>
                     </span>
                   </div>
                 </Show>

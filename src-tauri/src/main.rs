@@ -30,8 +30,9 @@ use walkdir::{DirEntry, WalkDir};
 #[derive(Serialize, Deserialize, Default)]
 pub struct NoteMeta {
     id: String,
-    path: String,
-    title: String,
+    // Path is the relative path split on directories and the file extension.
+    // e.g. ['dir', 'subdir', 'filename', 'xhtml']
+    path: Vec<String>,
     is_directory: bool,
     created: String,
     updated: String,
@@ -53,15 +54,29 @@ fn is_hidden_std(entry: &std::fs::DirEntry) -> bool {
         .unwrap_or(false)
 }
 
+fn is_note(entry: &DirEntry) -> bool {
+    entry.path().extension().map_or(false, |e| e == "xhtml")
+}
+
+fn is_note_std(entry: &std::fs::DirEntry) -> bool {
+    entry.path().extension().map_or(false, |e| e == "xhtml")
+}
+
 fn load_note_meta(dir_path: &PathBuf, path: &PathBuf) -> anyhow::Result<NoteMeta> {
     let mut nm = NoteMeta::default();
 
     nm.path = path
         .strip_prefix(dir_path)?
-        .to_str()
-        .context("path to str")?
-        .to_owned();
-    nm.title = path.file_stem().unwrap().to_str().unwrap().to_owned();
+        .components()
+        .map(|c| c.as_os_str().to_str().unwrap().to_owned())
+        .collect();
+
+    let ext = path.extension().unwrap().to_str().unwrap().to_owned();
+    let title = path.file_stem().unwrap().to_str().unwrap().to_owned();
+
+    let len = nm.path.len();
+    nm.path[len-1] = title;
+    nm.path.push(ext);
 
     let mut reader = match Reader::from_file(&path) {
         Ok(reader) => reader,
@@ -160,28 +175,26 @@ fn load_notes_dir(dir: &str, is_root: bool) -> CommandResult<Vec<NoteMeta>> {
 
     let dir_iter = read_dir(&dir_path).map_err(Error::msg)?;
 
-
     let mut notes: Vec<NoteMeta> = if is_root {
         WalkDir::new(&dir_path)
             .into_iter()
             .flatten()
-            .filter(|e| !(is_hidden(e) || e.path().is_dir() || e.path() == dir_path))
+            .filter(|e| !(is_hidden(e) || e.path().is_dir() || e.path() == dir_path) && is_note(e))
             .par_bridge()
             .into_par_iter()
-            .map(|e| {
-                load_note_meta(&dir_path.to_path_buf(), &e.path().to_path_buf())
-            })
+            .map(|e| load_note_meta(&dir_path.to_path_buf(), &e.path().to_path_buf()))
             .flatten()
             .collect()
     } else {
         dir_iter
             .flatten()
-            .filter(|f| !(is_hidden_std(f) || f.file_type().unwrap().is_dir() || f.path() == dir_path))
+            .filter(|f| {
+                !(is_hidden_std(f) || f.file_type().unwrap().is_dir() || f.path() == dir_path)
+                    && is_note_std(f)
+            })
             .par_bridge()
             .into_par_iter()
-            .map(|e| {
-                load_note_meta(&dir_path.to_path_buf(), &e.path().to_path_buf())
-            })
+            .map(|e| load_note_meta(&dir_path.to_path_buf(), &e.path().to_path_buf()))
             .flatten()
             .collect()
     };
