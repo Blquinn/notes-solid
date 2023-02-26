@@ -56,8 +56,14 @@ export function buildKeymap(schema: Schema) {
   bind("Mod-b", toggleMark(schema.marks.strong));
   bind("Mod-B", toggleMark(schema.marks.strong));
 
+  bind("Mod-u", toggleMark(schema.marks.u));
+  bind("Mod-U", toggleMark(schema.marks.u));
+
   bind("Mod-i", toggleMark(schema.marks.em));
   bind("Mod-I", toggleMark(schema.marks.em));
+
+  bind("Mod-s", toggleMark(schema.marks.strike));
+  bind("Mod-S", toggleMark(schema.marks.strike));
 
   bind("Mod-`", toggleMark(schema.marks.code));
 
