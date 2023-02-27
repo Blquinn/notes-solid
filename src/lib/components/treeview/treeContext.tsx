@@ -1,5 +1,5 @@
 import { FragmentProps } from "solid-headless/dist/types/utils/Fragment";
-import { Context as SolidContext, createContext } from "solid-js";
+import { Context as SolidContext, createContext, useContext } from "solid-js";
 import { createStore, produce, SetStoreFunction } from "solid-js/store";
 import * as p from 'path-browserify';
 
@@ -131,14 +131,7 @@ export class TreeViewController<T> {
 }
 
 export function TreeProvider<T>(props: TreeProviderProps<T>) {
-  const initialState: TreeState<T> = {
-    tree: props.tree,
-    expandedNodes: {},
-  };
-
-  const controller = new TreeViewController(initialState);
-
   return (
-    <props.context.Provider value={controller}>{props.children}</props.context.Provider>
+    <props.context.Provider value={useContext(props.context)}>{props.children}</props.context.Provider>
   );
 }

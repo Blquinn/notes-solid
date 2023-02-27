@@ -47,6 +47,15 @@ export class NoteListController {
     return this._state.notes.find(n => n.id == this._state.selectedNote);
   }
 
+  private setNotes(notes: NoteMeta[]) {
+    this.setState('notes', notes);
+  }
+
+  // TODO: This should never be set outside the controller.
+  private setLoading(loading: boolean) {
+    this.setState('loading', loading);
+  }
+
   // Returns the new note if updated, or the old note if not.
   // Returns undefined if there was no active note.
   async renameNote(newName: string): Promise<NoteMeta | undefined> {
@@ -77,15 +86,6 @@ export class NoteListController {
     this.updateNote(note, newNote);
     this.select(note.id);
     return newNote;
-  }
-
-  private setNotes(notes: NoteMeta[]) {
-    this.setState('notes', notes);
-  }
-
-  // TODO: This should never be set outside the controller.
-  private setLoading(loading: boolean) {
-    this.setState('loading', loading);
   }
 
   async loadNotesList() {
@@ -145,11 +145,8 @@ export const NotesListContext = createContext<NoteListController>(
 );
 
 export function NoteListControllerProvider(props: FragmentProps) {
-  const dirTree = useContext(DirectoryTreeContext);
-  const controller = new NoteListController(dirTree);
-
   return (
-    <NotesListContext.Provider value={controller}>
+    <NotesListContext.Provider value={ useContext(NotesListContext) }>
       {props.children}
     </NotesListContext.Provider>
   )
