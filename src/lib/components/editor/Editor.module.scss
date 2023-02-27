@@ -89,20 +89,20 @@
     ul.task-list {
       > li {
         padding-left: .25rem;
+        margin-top: 0;
+        margin-bottom: 0;
 
         &::marker {
-          font: var(--fa-font-regular) !important;
+          font: var(--fa-font-regular);
           content: '\f111' !important;
-          color: #5e72e4 !important;
+          color: #5e72e4;
         }
 
         &[data-checked=true] {
-          text-decoration: line-through !important;
+          // text-decoration: line-through;
 
           &::marker {
-            font: var(--fa-font-regular) !important;
             content: '\f058' !important;
-            color: #5e72e4 !important;
           }
         }
       }
