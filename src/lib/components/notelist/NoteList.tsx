@@ -10,36 +10,15 @@ import { NotesListContext } from "./context";
 
 export default function NoteList() {
   const [dirTree, _] = useContext(DirectoryTreeContext);
-  const [notesState, notesStore] = useContext(NotesListContext);
+  const noteListController = useContext(NotesListContext);
 
-  const loaded = () => !notesState.loading;
+  const loaded = () => !noteListController.state.loading;
 
   createEffect(on(() => dirTree.selectedNode, async () => {
     // TODO: Figure out why this fires twice.
     // TODO: Ensure that there's no race if you click a second directory while
     // still loading the first directory.
-    if (notesState.loading) {
-      return;
-    }
-
-    try {
-      notesStore.setLoading(true);
-
-      const path = dirTree.selectedNode;
-      const notes = await loadDirectory(path ?? [], path === undefined);
-      if (notes.isOk) {
-        notesStore.setNotes(notes.value);
-        if (notes.value.length == 0) {
-          notesStore.select(undefined);
-        } else {
-          notesStore.select(notes.value[0].id);
-        }
-      } else {
-        // TODO: Show error state.
-      }
-    } finally {
-      notesStore.setLoading(false);
-    }
+    await noteListController.loadNotesList(dirTree.selectedNode);
   }));
 
   return (
@@ -53,16 +32,16 @@ export default function NoteList() {
     >
       <div class="list-nav overflow-y-auto hide-scrollbar" data-simplebar>
         <ul>
-          <For each={notesState.notes}>{(note, i) =>
+          <For each={noteListController.state.notes}>{(note, i) =>
             <li
               class="list-item !m-0"
               classList={{
-                ['bg-primary-active-token']: note.id == notesState.selectedNote,
+                ['bg-primary-active-token']: note.id == noteListController.state.selectedNote,
               }}
             >
               <a href="#" 
                 class="block flex flex-col !items-start"
-                onClick={() => notesStore.select(note.id)}
+                onClick={() => noteListController.select(note.id)}
               >
                 <div>{noteMetaTitle(note)}</div>
 
@@ -70,7 +49,7 @@ export default function NoteList() {
                 <Show when={dirTree.selectedNode === undefined && noteMetaIsInDir(note)}>
                   <div class="!ml-0"
                     classList={{
-                      ['text-surface-500-400-token']: note.id !== notesState.selectedNote,
+                      ['text-surface-500-400-token']: note.id !== noteListController.state.selectedNote,
                     }}
                   >
                     <span class="flex flex-row items-center gap-1">

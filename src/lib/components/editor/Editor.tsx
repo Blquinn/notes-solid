@@ -19,7 +19,7 @@ import EditorToolbar from "./EditorToolbar";
 
 import debounce from 'lodash.debounce';
 import { loadNote, saveNote } from "../../persistence";
-import { findActiveNote, NotesListContext } from "../notelist/context";
+import { NotesListContext } from "../notelist/context";
 import EditorTitle from "./EditorTitle";
 
 
@@ -27,11 +27,11 @@ const editorPadding = 10; // px
 
 export default function Editor() {
 
-  const [notesState, notesStore] = useContext(NotesListContext);
+  const noteListController = useContext(NotesListContext);
 
   const saveDebounce = debounce(async (note: NoteMeta, view: EditorView) => {
     const updatedNote: NoteMeta = {...note, updated: new Date()};
-    notesStore.updateNote(note, updatedNote);
+    noteListController.updateNote(note, updatedNote);
     await saveNote(updatedNote, view.state.doc.content);
   }, 300)
 
@@ -54,7 +54,7 @@ export default function Editor() {
 
     const editorState = editorView!.state;
 
-    const note = findActiveNote(notesState);
+    const note = noteListController.findActiveNote();
     if (!note) {
       setTitle(undefined);
       editorView!.updateState(EditorState.create({
@@ -77,7 +77,7 @@ export default function Editor() {
     editorView!.updateState(newState);
   }
 
-  createEffect(on(() => notesState.selectedNote, loadSelectedNote))
+  createEffect(on(() => noteListController.state.selectedNote, loadSelectedNote))
 
   onMount(async () => {
     editorView = new EditorView(editor!, {
@@ -102,7 +102,7 @@ export default function Editor() {
                     return;
                   }
 
-                  const note = findActiveNote(notesState);
+                  const note = noteListController.findActiveNote();
                   if (note) {
                     saveDebounce(note, view);
                   }

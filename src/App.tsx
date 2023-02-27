@@ -23,7 +23,7 @@ import { ModalContext, ModalContextProvider } from "./lib/skeleton/utlities/Moda
 import * as p from 'path-browserify';
 
 function Shell() {
-  const [notesListState, notesListStore] = useContext(NotesListContext);
+  const notesListController = useContext(NotesListContext);
   const [dirTreeState, dirTreeStore] = useContext(DirectoryTreeContext);
   const [showDirTree, setShowDirTree] = createStorageSignal('notes.layout.showDirTree', true);
 
@@ -38,7 +38,7 @@ function Shell() {
       updated: new Date(),
     }
     await saveNote(note);
-    notesListStore.updateNote(note, note);
+    notesListController.updateNote(note, note);
   }
 
   // TODO: Figure out tooltips
@@ -142,7 +142,7 @@ function Shell() {
           pageClasses="flex-1 flex flex-col min-h-0 bg-surface-50-900-token"
           childrenClasses="flex-1 flex flex-col min-h-0 bg-surface-50-900-token"
         >
-          {notesListState.selectedNote ? (
+          {notesListController.state.selectedNote ? (
             <Editor />
           ) : (
             <div class="h-full w-full flex justify-center items-center">

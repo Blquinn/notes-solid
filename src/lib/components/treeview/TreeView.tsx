@@ -37,7 +37,6 @@ export default function TreeView<T>(props: TreeViewProps<T>) {
     <ul class={styles.treeView + ' ' + props.listClasses}>
       <For each={tree()}>{(node, i) => {
         const nodePath = [...(props.basePath ?? []), node.id];
-        console.log(node.id, nodePath)
 
         return (
           <li class="cursor-pointer">
