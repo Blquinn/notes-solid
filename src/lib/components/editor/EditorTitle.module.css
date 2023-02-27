@@ -1,6 +1,7 @@
 .title {
   line-height: 1.42;
   padding: 12px 15px;
+  font-family: var(--theme-font-family-heading);
 }
 
 .title:focus {
