@@ -89,10 +89,10 @@ function Shell() {
   );
 
   const settingsButton = () => {
-    const [_ms, modalStore] = useContext(ModalContext);
+    const modalController = useContext(ModalContext);
 
     return (
-      <button onClick={() => modalStore.setContent(settingsPanel)} class="h-6 w-6">
+      <button onClick={() => modalController.setContent(settingsPanel)} class="h-6 w-6">
         <Icon path={cog_6Tooth} />
       </button>
     );

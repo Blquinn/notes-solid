@@ -1,46 +1,42 @@
 import { FragmentProps } from "solid-headless/dist/types/utils/Fragment";
 import { createContext, JSX } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createStore, SetStoreFunction } from "solid-js/store";
 import Modal from "./Modal";
 
 type ModalState = {
   content?: JSX.Element
 }
 
-type ModalContext = [
-  ModalState,
-  {
-    // Undefined will hide the modal.
-    setContent(content?: JSX.Element): void;
+class ModalController {
+  private _state: ModalState;
+  public get state(): ModalState {
+    return this._state;
   }
-];
 
-export const ModalContext = createContext<ModalContext>([
-  {},
-  {} as any,
-]);
+  private setState: SetStoreFunction<ModalState>;
+
+  constructor() {
+    const initialState: ModalState = {};
+    [this._state, this.setState] = createStore(initialState);
+  }
+  
+  setContent(content?: JSX.Element) {
+    this.setState("content", content);
+  }
+}
+
+export const ModalContext = createContext<ModalController>(new ModalController());
 
 export function ModalContextProvider(props: FragmentProps) {
-  const initialState: ModalState = {};
-
-  const [state, setState] = createStore(initialState);
-
-  const store: ModalContext = [
-    state,
-    {
-      setContent(content) {
-        setState("content", content);
-      },
-    },
-  ];
+  const controller = new ModalController();
 
   return (
-    <ModalContext.Provider value={store}>
+    <ModalContext.Provider value={controller}>
       <Modal 
-        open={() => !!state.content}
-        onClose={() => store[1].setContent(undefined)}
+        open={() => !!controller.state.content}
+        onClose={() => controller.setContent(undefined)}
       >
-        {state.content}
+        {controller.state.content}
       </Modal>
       {props.children}
     </ModalContext.Provider>
