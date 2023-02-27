@@ -89,7 +89,7 @@ function* intersperse<T, R>(a: Array<T>, delim: R): Generator<T | R> {
   }
 }
 
-class TreeViewController<T> {
+export class TreeViewController<T> {
   private _state: TreeState<T>;
   public get state(): TreeState<T> {
     return this._state;

@@ -16,7 +16,7 @@ export default function NoteList() {
     // TODO: Figure out why this fires twice.
     // TODO: Ensure that there's no race if you click a second directory while
     // still loading the first directory.
-    await controller.loadNotesList(dirTree.state.selectedNode);
+    await controller.loadNotesList();
   }));
 
   return (

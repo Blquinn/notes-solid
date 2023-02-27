@@ -210,31 +210,33 @@ fn load_notes_dir(dir: &str, is_root: bool) -> CommandResult<Vec<NoteMeta>> {
 }
 
 #[tauri::command]
-fn search_notes(dir: &str, phrase: &str) -> Vec<String> {
+fn search_notes(dir: &str, phrase: &str) -> CommandResult<Vec<NoteMeta>> {
     println!("Searching directory {} for phrase {}.", dir, phrase);
+
+    let dir_path = Path::new(dir);
 
     let re = RegexBuilder::new(&regex::escape(phrase))
         .case_insensitive(true)
         .build()
         .unwrap();
 
-    return WalkDir::new(dir)
+    let matches: anyhow::Result<Vec<NoteMeta>> = WalkDir::new(dir)
         .into_iter()
-        .filter_entry(|e| !is_hidden(e))
+        .flatten()
+        .filter(|e| !(is_hidden(e) || e.path().is_dir() || e.path() == dir_path) && is_note(e))
         .par_bridge()
         .into_par_iter()
         .map(|e| {
-            let path = e.unwrap().path().to_str().unwrap().to_owned();
-            let pp = Path::new(&path);
-            let title = pp.file_stem().unwrap().to_str().unwrap();
+            let path = e.path();
+            let title = path.file_stem().unwrap().to_str().unwrap();
 
             if re.is_match(title) {
-                return Some(path);
+                return Some(load_note_meta(&dir_path.to_path_buf(), &path.to_path_buf()));
             }
 
             let mut reader = match Reader::from_file(&path) {
                 Ok(reader) => reader,
-                Err(_) => return None,
+                Err(e) => return Some(Err(e.into())),
             };
 
             let mut buf = Vec::new();
@@ -245,11 +247,11 @@ fn search_notes(dir: &str, phrase: &str) -> Vec<String> {
                         let text = e.unescape().unwrap();
 
                         if re.is_match(&text.as_ref()) {
-                            return Some(path);
+                            return Some(load_note_meta(&dir_path.to_path_buf(), &path.to_path_buf()));
                         }
                     }
                     Ok(Event::Eof) => break, // exits the loop when reaching end of file
-                    Err(_) => return None,
+                    Err(e) => return Some(Err(e.into())),
                     _ => (), // There are several other `Event`s we do not consider here
                 }
             }
@@ -258,6 +260,8 @@ fn search_notes(dir: &str, phrase: &str) -> Vec<String> {
         })
         .flatten()
         .collect();
+
+    matches.map_err(|e| e.into())
 }
 
 fn main() {

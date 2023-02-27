@@ -183,6 +183,18 @@ export async function saveNote(note: NoteMeta, content?: Fragment): Promise<void
   await writeTextFile(path, xml);
 }
 
+// Returns a list of paths that match the phrase.
+export async function searchNotes(phrase: string): Promise<Result<NoteMeta[], string>> {
+  try {
+    const res: NoteMeta[] = await invoke("search_notes", { dir: notesDir()!, phrase });
+    return Result.ok(res);
+  } catch (e) {
+    const msg = `Error loading notes from ${notesDir()}: ${e}`
+    console.error(msg);
+    return Result.err(msg);
+  }
+}
+
 // Local storage
 
 const noteDirectoryKey = 'note_directory';

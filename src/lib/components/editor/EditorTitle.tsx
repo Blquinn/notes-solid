@@ -67,6 +67,7 @@ export default function EditorTitle(props: EditorTitleProps) {
       placeholder="Note title..."
       value={props.title() ?? ''}
       onKeyDown={onTitleKey}
+      onChange={onTitleAccepted}
     />
   );
 }

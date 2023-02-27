@@ -6,9 +6,9 @@ import { cog_6Tooth, pencilSquare } from "solid-heroicons/solid";
 import { Match, onMount, Switch, useContext } from "solid-js";
 import DirectoryButton from "./lib/components/DirectoryButton";
 import Editor from "./lib/components/editor/Editor";
-import { NoteListContextProvider, NotesListContext } from "./lib/components/notelist/context";
+import { NoteListControllerProvider, NotesListContext } from "./lib/components/notelist/context";
 import { TreeProvider } from "./lib/components/treeview/treeContext";
-import { getNotesDataDir, loadDirectoryTree, saveNote } from "./lib/persistence";
+import { getNotesDataDir, loadDirectoryTree, saveNote, searchNotes } from "./lib/persistence";
 import LightSwitch from "./lib/skeleton/utlities/LightSwitch";
 import NotesPane from "./NotesPane";
 import { DirectoryTreeContext, LoadingError, NoteMeta, notesDirLoadingState, setNotesDirLoadingState, type DirectorySet } from "./state";
@@ -19,6 +19,7 @@ import ExpandLeftSidebar from './assets/icons/expand_left_sidebar.svg';
 import { createStorageSignal } from "./lib/localStorage";
 import LoadingSpinner from "./lib/components/LoadingSpinner";
 import { ModalContext, ModalContextProvider } from "./lib/skeleton/utlities/Modal/context";
+import debounce from "lodash.debounce";
 
 function Shell() {
   const notesListController = useContext(NotesListContext);
@@ -98,8 +99,33 @@ function Shell() {
     );
   }
 
+  const searchDebounce = debounce(async (phrase: string | null) => {
+    await notesListController.search(phrase || undefined);
+  }, 300);
+
+  const searchEntry = () => {
+    // Debounce
+    return (
+      <input 
+        type="search" 
+        class="input p-1" 
+        placeholder="Search notes..." 
+        onInput={(e) => searchDebounce((e.target as any).value)} 
+      />
+    );
+  }
+
+  const headerTrail = () => {
+    return (
+      <>
+        {searchEntry}
+        {settingsButton}
+      </>
+    );
+  }
+
   const header = () => (
-    <AppBar padding="p-2" shadow="drop-shadow" lead={headerLead} trail={settingsButton} />
+    <AppBar padding="p-2" shadow="drop-shadow" lead={headerLead} trail={headerTrail} />
   );
 
   // TODO: Loading state should be encapsulated into the controller.
@@ -122,7 +148,6 @@ function Shell() {
 
   return (
     <Switch>
-      {/* TODO: This should just be a loading screen */}
       <Match when={notesDirLoadingState().state == 'loading'}>
         <div class="flex w-full h-full justify-center align-center">
           <LoadingSpinner />
@@ -160,11 +185,11 @@ function App() {
 
   return (
     <TreeProvider tree={dirViewController.state.tree} context={DirectoryTreeContext}>
-      <NoteListContextProvider>
+      <NoteListControllerProvider>
         <ModalContextProvider>
           <Shell />
         </ModalContextProvider>
-      </NoteListContextProvider>
+      </NoteListControllerProvider>
     </TreeProvider>
   );
 }

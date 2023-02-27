@@ -1,8 +1,11 @@
 import { FragmentProps } from "solid-headless/dist/types/utils/Fragment";
-import { createContext } from "solid-js";
+import { createContext, useContext } from "solid-js";
 import { createStore, SetStoreFunction } from "solid-js/store";
-import { NoteMeta } from "../../../state";
-import { loadDirectory } from "../../persistence";
+import { DirectoryMeta, DirectoryTreeContext, NoteMeta } from "../../../state";
+import { loadDirectory, searchNotes } from "../../persistence";
+import DirectoryButton from "../DirectoryButton";
+import { TreeViewController } from '../treeview/treeContext';
+import NoteList from "./NoteList";
 
 type NotesListState = {
   loading: boolean,
@@ -11,16 +14,20 @@ type NotesListState = {
 }
 
 // TODO: Move things like loading a list of notes into this controller.
-class NoteListController {
+export class NoteListController {
 
   private _state: NotesListState;
   public get state(): NotesListState {
     return this._state;
   }
 
+  private dirTree: TreeViewController<DirectoryMeta>;
+
   private setState: SetStoreFunction<NotesListState>;
 
-  constructor() {
+  constructor(dirTree: TreeViewController<DirectoryMeta>) {
+    this.dirTree = dirTree;
+
     const initialState: NotesListState = {
       loading: false,
       notes: [],
@@ -50,10 +57,12 @@ class NoteListController {
     this.setState('loading', loading);
   }
 
-  async loadNotesList(path?: string[]) {
+  async loadNotesList() {
     if (this._state.loading) {
       return;
     }
+
+    const path = this.dirTree.state.selectedNode;
 
     try {
       this.setLoading(true);
@@ -73,12 +82,40 @@ class NoteListController {
       this.setLoading(false);
     }
   }
+
+  async search(phrase?: string) {
+    if (!phrase) {
+      await this.loadNotesList();
+      return;
+    }
+
+    try {
+      this.setLoading(true);
+
+      const res = await searchNotes(phrase)
+      if (res.isOk) {
+        this.setNotes(res.value);
+        if (res.value.length > 0) {
+          this.select(res.value[0].id);
+        }
+      } else {
+        console.error(`Failed to load notes list: ${res.error}`);
+        await this.loadNotesList();
+      }
+    } finally {
+      this.setLoading(false);
+    }
+  }
 }
 
-export const NotesListContext = createContext<NoteListController>(new NoteListController());
+// TODO: How can we avoid creating these controllers twice?
+export const NotesListContext = createContext<NoteListController>(
+  new NoteListController(useContext(DirectoryTreeContext))
+);
 
-export function NoteListContextProvider(props: FragmentProps) {
-  const controller = new NoteListController();
+export function NoteListControllerProvider(props: FragmentProps) {
+  const dirTree = useContext(DirectoryTreeContext);
+  const controller = new NoteListController(dirTree);
 
   return (
     <NotesListContext.Provider value={controller}>
