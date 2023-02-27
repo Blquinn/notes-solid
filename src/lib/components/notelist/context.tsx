@@ -1,11 +1,10 @@
+import { fs } from "@tauri-apps/api";
 import { FragmentProps } from "solid-headless/dist/types/utils/Fragment";
 import { createContext, useContext } from "solid-js";
 import { createStore, SetStoreFunction } from "solid-js/store";
-import { DirectoryMeta, DirectoryTreeContext, NoteMeta } from "../../../state";
+import { DirectoryMeta, DirectoryTreeContext, NoteMeta, noteMetaAbsPath, noteMetaDirPath, noteMetaTitle } from "../../../state";
 import { loadDirectory, searchNotes } from "../../persistence";
-import DirectoryButton from "../DirectoryButton";
 import { TreeViewController } from '../treeview/treeContext';
-import NoteList from "./NoteList";
 
 type NotesListState = {
   loading: boolean,
@@ -46,6 +45,38 @@ export class NoteListController {
 
   findActiveNote(): NoteMeta | undefined {
     return this._state.notes.find(n => n.id == this._state.selectedNote);
+  }
+
+  // Returns the new note if updated, or the old note if not.
+  // Returns undefined if there was no active note.
+  async renameNote(newName: string): Promise<NoteMeta | undefined> {
+    const note = this.findActiveNote();
+    if (!note) return undefined;
+
+    const noteTitle = noteMetaTitle(note);
+    if (noteTitle === newName) {
+      return note;
+    }
+
+    const dirPath = noteMetaDirPath(note);
+    const newPath = [...dirPath, newName, 'xhtml'];
+
+    const newNote: NoteMeta = {
+      ...note,
+      path: newPath,
+    };
+    const newAbsPath = await noteMetaAbsPath(newNote);
+    if (await fs.exists(newAbsPath)) {
+      alert(`Note ${newPath} already exists.`);
+      return note;
+    }
+
+    const currentPath = await noteMetaAbsPath(note);
+    await fs.renameFile(currentPath, newAbsPath);
+
+    this.updateNote(note, newNote);
+    this.select(note.id);
+    return newNote;
   }
 
   private setNotes(notes: NoteMeta[]) {

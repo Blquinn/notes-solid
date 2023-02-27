@@ -1,9 +1,8 @@
 import { NotesListContext } from '../notelist/context';
 import styles from './EditorTitle.module.css';
 
-import * as fs from "@tauri-apps/api/fs";
 import { Accessor, useContext } from 'solid-js';
-import { NoteMeta, noteMetaAbsPath, noteMetaDirPath, noteMetaTitle, notesDir } from '../../../state';
+import { noteMetaTitle } from '../../../state';
 
 export interface EditorTitleProps {
   onEnterPressed: () => void
@@ -17,34 +16,9 @@ export default function EditorTitle(props: EditorTitleProps) {
   let titleEl: HTMLInputElement | undefined;
 
   const onTitleAccepted = async () => {
-    const note = noteListController.findActiveNote();
+    const note = await noteListController.renameNote(titleEl!.value);
     if (!note) return;
-
-    const titleText = titleEl!.value;
-    const noteTitle = noteMetaTitle(note);
-    if (noteTitle === titleText) {
-      return;
-    }
-
-    const dirPath = noteMetaDirPath(note);
-    const newPath = [...dirPath, titleText, 'xhtml'];
-
-    const newNote: NoteMeta = {
-      ...note,
-      path: newPath,
-    };
-    const newAbsPath = await noteMetaAbsPath(newNote);
-    if (await fs.exists(newAbsPath)) {
-      titleEl!.value = noteMetaTitle(note);
-      alert(`Note ${newPath} already exists.`);
-      return;
-    }
-
-    const currentPath = await noteMetaAbsPath(note);
-    await fs.renameFile(currentPath, newAbsPath);
-
-    noteListController.updateNote(note, newNote);
-    noteListController.select(note.id);
+    titleEl!.value = noteMetaTitle(note);
   }
 
   // TODO: Save and update state.
