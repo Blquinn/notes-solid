@@ -17,20 +17,20 @@ export interface TreeViewProps<T> {
 }
 
 export default function TreeView<T>(props: TreeViewProps<T>) {
-  const [state, { select, expand }] = useContext(props.context);
+  const controller = useContext(props.context);
 
-  const tree = props.tree ?? (() => state.tree);
+  const tree = props.tree ?? (() => controller.state.tree);
   const index = props.index ?? [];
 
-  const showChildren = (path: string[]) => state.expandedNodes[p.join(...path)] ?? false;
+  const showChildren = (path: string[]) => controller.state.expandedNodes[p.join(...path)] ?? false;
 
   const onLeafSelected = (node: TTreeNode<T>, path: string[]) => {
     props.onNodeSelected?.(node);
-    select(path);
+    controller.select(path);
   }
 
   const onBranchClicked = (path: string[]) => {
-    expand(path);
+    controller.expand(path);
   }
 
   return (
@@ -41,7 +41,7 @@ export default function TreeView<T>(props: TreeViewProps<T>) {
         return (
           <li class="cursor-pointer">
             <span class="p-2 gap-1 flex flex-1"
-              classList={{ ['bg-primary-active-token']: state.selectedNode && arrayEquals(nodePath, state.selectedNode) }}
+              classList={{ ['bg-primary-active-token']: controller.state.selectedNode && arrayEquals(nodePath, controller.state.selectedNode) }}
             >
               {(node.children && node.children.length > 0) ? (
                 <span class="w-4 h-4 self-center inline-block"

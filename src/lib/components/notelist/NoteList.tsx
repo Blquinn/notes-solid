@@ -1,24 +1,22 @@
-import { join, sep } from "@tauri-apps/api/path";
+import { sep } from "@tauri-apps/api/path";
 import { Icon } from "solid-heroicons";
 import { folder } from "solid-heroicons/solid";
 import { createEffect, For, on, Show, useContext } from "solid-js";
 import { DirectoryTreeContext, noteMetaDirPath, noteMetaIsInDir, noteMetaTitle } from "../../../state";
-import { loadDirectory } from "../../persistence";
 import LoadingSpinner from "../LoadingSpinner";
-import { getSelectedNode, rootNode } from "../treeview/treeContext";
 import { NotesListContext } from "./context";
 
 export default function NoteList() {
-  const [dirTree, _] = useContext(DirectoryTreeContext);
-  const noteListController = useContext(NotesListContext);
+  const dirTree = useContext(DirectoryTreeContext);
+  const controller = useContext(NotesListContext);
 
-  const loaded = () => !noteListController.state.loading;
+  const loaded = () => !controller.state.loading;
 
-  createEffect(on(() => dirTree.selectedNode, async () => {
+  createEffect(on(() => dirTree.state.selectedNode, async () => {
     // TODO: Figure out why this fires twice.
     // TODO: Ensure that there's no race if you click a second directory while
     // still loading the first directory.
-    await noteListController.loadNotesList(dirTree.selectedNode);
+    await controller.loadNotesList(dirTree.state.selectedNode);
   }));
 
   return (
@@ -32,24 +30,24 @@ export default function NoteList() {
     >
       <div class="list-nav overflow-y-auto hide-scrollbar" data-simplebar>
         <ul>
-          <For each={noteListController.state.notes}>{(note, i) =>
+          <For each={controller.state.notes}>{(note, i) =>
             <li
               class="list-item !m-0"
               classList={{
-                ['bg-primary-active-token']: note.id == noteListController.state.selectedNote,
+                ['bg-primary-active-token']: note.id == controller.state.selectedNote,
               }}
             >
               <a href="#" 
                 class="block flex flex-col !items-start"
-                onClick={() => noteListController.select(note.id)}
+                onClick={() => controller.select(note.id)}
               >
                 <div>{noteMetaTitle(note)}</div>
 
                 {/* Show directory when the note is in a notebook. */}
-                <Show when={dirTree.selectedNode === undefined && noteMetaIsInDir(note)}>
+                <Show when={dirTree.state.selectedNode === undefined && noteMetaIsInDir(note)}>
                   <div class="!ml-0"
                     classList={{
-                      ['text-surface-500-400-token']: note.id !== noteListController.state.selectedNote,
+                      ['text-surface-500-400-token']: note.id !== controller.state.selectedNote,
                     }}
                   >
                     <span class="flex flex-row items-center gap-1">

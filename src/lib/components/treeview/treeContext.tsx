@@ -1,6 +1,6 @@
 import { FragmentProps } from "solid-headless/dist/types/utils/Fragment";
 import { Context as SolidContext, createContext } from "solid-js";
-import { createStore, produce } from "solid-js/store";
+import { createStore, produce, SetStoreFunction } from "solid-js/store";
 import * as p from 'path-browserify';
 
 export type TreeIndex = number[];
@@ -29,11 +29,11 @@ export interface TreeProviderProps<T> extends FragmentProps {
 }
 
 function dfs<T>(tree: TTree<T>, path: string[], level: number = 0): TTreeNode<T> | undefined {
-  if (level > path.length-1) return undefined;
+  if (level > path.length - 1) return undefined;
 
   for (let node of tree) {
     if (node.id == path[level]) {
-      if (level == path.length-1)
+      if (level == path.length - 1)
         return node;
       if (node.children)
         return dfs(node.children, path, level + 1);
@@ -42,11 +42,6 @@ function dfs<T>(tree: TTree<T>, path: string[], level: number = 0): TTreeNode<T>
 
   return undefined;
 }
-
-// export type NodeSelection<T> = {
-//   path: string[]
-//   node: TTreeNode<T>
-// }
 
 export function getSelectedNode<T>(state: TreeState<T>): TTreeNode<T> | undefined {
   if (!state.selectedNode) {
@@ -79,24 +74,10 @@ function getNodeAtIndex<T>(tree: TTree<T>, index: TreeIndex): TTreeNode<T> {
   return node;
 }
 
-type TTreeContext<T> = [
-  TreeState<T>,
-  {
-    select(path?: string[]): void;
-    expand(path: string[]): void;
-    updateTreeNode(index: TreeIndex, fn: (existing: T) => T): void;
-    replaceTree(tree: TTree<T>): void;
-    addNode(parentIndex: TreeIndex, node: TTreeNode<T>): void;
-  }
-];
+export type Context<T> = SolidContext<TreeViewController<T>>;
 
-export type Context<T> = SolidContext<TTreeContext<T>>
-
-export function createTreeContext<T>(initialTree?: TreeState<T>): Context<T> {
-  return createContext<TTreeContext<T>>([
-    initialTree ?? { tree: [], expandedNodes: {} },
-    {} as any,
-  ]);
+export function createTreeContext<T>(initialTree: TreeState<T>): Context<T> {
+  return createContext<TreeViewController<T>>(new TreeViewController(initialTree));
 }
 
 function* intersperse<T, R>(a: Array<T>, delim: R): Generator<T | R> {
@@ -108,44 +89,56 @@ function* intersperse<T, R>(a: Array<T>, delim: R): Generator<T | R> {
   }
 }
 
+class TreeViewController<T> {
+  private _state: TreeState<T>;
+  public get state(): TreeState<T> {
+    return this._state;
+  }
+
+  private setState: SetStoreFunction<TreeState<T>>;
+
+  constructor(initialState: TreeState<T>) {
+    [this._state, this.setState] = createStore(initialState);
+  }
+
+  select(path?: string[]) {
+    this.setState("selectedNode", path);
+  }
+
+  expand(path: string[]) {
+    this.setState('expandedNodes', p.join(...path), (expanded) => !expanded);
+  }
+
+  updateTreeNode(index: TreeIndex, fn: (existing: T) => T) {
+    (this.setState as any)('tree', ...intersperse(index, 'children'), fn)
+  }
+
+  replaceTree(newTree: TTree<T>) {
+    this.setState('tree', newTree);
+  }
+
+  addNode(parentIndex: TreeIndex, node: TTreeNode<T>) {
+    this.setState(produce((s) => {
+      if (parentIndex.length == 0) {
+        s.tree.push(node);
+      } else {
+        const parent = getNodeAtIndex(s.tree, parentIndex);
+        parent.children ??= [];
+        parent.children.push(node);
+      }
+    }))
+  }
+}
+
 export function TreeProvider<T>(props: TreeProviderProps<T>) {
   const initialState: TreeState<T> = {
     tree: props.tree,
     expandedNodes: {},
   };
 
-  const [state, setState] = createStore(initialState);
-
-  const store: TTreeContext<T> = [
-    state,
-    {
-      select(path) {
-        setState("selectedNode", path);
-      },
-      expand(path) {
-        setState('expandedNodes', p.join(...path), (expanded) => !expanded);
-      },
-      updateTreeNode(index, fn) {
-        (setState as any)('tree', ...intersperse(index, 'children'), fn)
-      },
-      replaceTree(newTree) {
-        setState('tree', newTree);
-      },
-      addNode(parentIndex, node) {
-        setState(produce((s) => {
-          if (parentIndex.length == 0) {
-            s.tree.push(node);
-          } else {
-            const parent = getNodeAtIndex(s.tree, parentIndex);
-            parent.children ??= [];
-            parent.children.push(node);
-          }
-        }))
-      },
-    },
-  ];
+  const controller = new TreeViewController(initialState);
 
   return (
-    <props.context.Provider value={store}>{props.children}</props.context.Provider>
+    <props.context.Provider value={controller}>{props.children}</props.context.Provider>
   );
 }

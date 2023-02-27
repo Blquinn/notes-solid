@@ -1,9 +1,8 @@
 import { FragmentProps } from "solid-headless/dist/types/utils/Fragment";
 import { createContext } from "solid-js";
 import { createStore, SetStoreFunction } from "solid-js/store";
-import { DirectoryMeta, NoteMeta } from "../../../state";
+import { NoteMeta } from "../../../state";
 import { loadDirectory } from "../../persistence";
-import { TreeState } from "../treeview/treeContext";
 
 type NotesListState = {
   loading: boolean,

@@ -17,14 +17,12 @@ import { v1 } from 'uuid';
 import CollapseLeftSidebar from './assets/icons/collapse_left_sidebar.svg';
 import ExpandLeftSidebar from './assets/icons/expand_left_sidebar.svg';
 import { createStorageSignal } from "./lib/localStorage";
-import { join } from "@tauri-apps/api/path";
 import LoadingSpinner from "./lib/components/LoadingSpinner";
 import { ModalContext, ModalContextProvider } from "./lib/skeleton/utlities/Modal/context";
-import * as p from 'path-browserify';
 
 function Shell() {
   const notesListController = useContext(NotesListContext);
-  const [dirTreeState, dirTreeStore] = useContext(DirectoryTreeContext);
+  const dirTreeController = useContext(DirectoryTreeContext);
   const [showDirTree, setShowDirTree] = createStorageSignal('notes.layout.showDirTree', true);
 
   const onNewNoteButtonClicked = async () => {
@@ -33,7 +31,7 @@ function Shell() {
     
     const note: NoteMeta = {
       id,
-      path: [...(dirTreeState.selectedNode ?? []), title, 'xhtml'],
+      path: [...(dirTreeController.state.selectedNode ?? []), title, 'xhtml'],
       created: new Date(),
       updated: new Date(),
     }
@@ -104,12 +102,13 @@ function Shell() {
     <AppBar padding="p-2" shadow="drop-shadow" lead={headerLead} trail={settingsButton} />
   );
 
+  // TODO: Loading state should be encapsulated into the controller.
   const loadNotes = async (directory: string) => {
     setNotesDirLoadingState({ state: 'loading', notesDirectory: directory });
 
     const result = await loadDirectoryTree(directory);
     if (result.isOk) {
-      dirTreeStore.replaceTree(result.value);
+      dirTreeController.replaceTree(result.value);
       setNotesDirLoadingState({ state: 'loaded', notesDirectory: directory });
     } else {
       setNotesDirLoadingState({ state: 'error', notesDirectory: directory, error: result.error });
@@ -157,10 +156,10 @@ function Shell() {
 }
 
 function App() {
-  const [state, _] = DirectoryTreeContext.defaultValue;
+  const dirViewController = DirectoryTreeContext.defaultValue;
 
   return (
-    <TreeProvider tree={state.tree} context={DirectoryTreeContext}>
+    <TreeProvider tree={dirViewController.state.tree} context={DirectoryTreeContext}>
       <NoteListContextProvider>
         <ModalContextProvider>
           <Shell />

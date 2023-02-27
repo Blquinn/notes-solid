@@ -1,4 +1,3 @@
-import { join } from "path-browserify";
 import { Accessor, useContext } from "solid-js";
 import NoteList from "./lib/components/notelist/NoteList";
 import { arrayEquals, rootNode, TTreeNode } from "./lib/components/treeview/treeContext";
@@ -12,7 +11,7 @@ export interface NotesPaneProps {
 export default function NotesPane(props: NotesPaneProps) {
   const treeCellContent = (node: TTreeNode<DirectoryMeta>, path: string[]) => node.label;
 
-  const [dirTree, store] = useContext(DirectoryTreeContext);
+  const dirTree = useContext(DirectoryTreeContext);
 
   return (
     <div class="side-bar h-full flex flex-row justify-stretch">
@@ -27,16 +26,16 @@ export default function NotesPane(props: NotesPaneProps) {
         <button
           class="w-full p-2 pl-7 text-left nav-list-item"
           classList={{
-            ['bg-primary-active-token']: dirTree.selectedNode === undefined,
+            ['bg-primary-active-token']: dirTree.state.selectedNode === undefined,
           }}
-          onClick={() => store.select(undefined)}>All Notes</button>
+          onClick={() => dirTree.select(undefined)}>All Notes</button>
 
         <button
           class="w-full p-2 pl-7 text-left nav-list-item"
           classList={{
-            ['bg-primary-active-token']: arrayEquals(dirTree.selectedNode, rootNode),
+            ['bg-primary-active-token']: arrayEquals(dirTree.state.selectedNode, rootNode),
           }}
-          onClick={() => store.select(rootNode)}>Notes</button>
+          onClick={() => dirTree.select(rootNode)}>Notes</button>
 
         <TreeView 
           listClasses="bg-surface-200-700-token" 
