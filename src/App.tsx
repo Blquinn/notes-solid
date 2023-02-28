@@ -149,8 +149,9 @@ function Shell() {
   return (
     <Switch>
       <Match when={notesDirLoadingState().state == 'loading'}>
-        <div class="flex w-full h-full justify-center align-center">
-          <LoadingSpinner />
+        <div class="flex flex-col w-full h-full justify-center items-center">
+          <LoadingSpinner class="h-12 w-12" />
+          <h5>Loading Notebook...</h5>
         </div>
       </Match>
       <Match when={notesDirLoadingState().state == 'error'}>
